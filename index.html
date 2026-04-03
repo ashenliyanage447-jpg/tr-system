@@ -189,20 +189,21 @@
 
 <script>
     // 1. CONFIGURATION
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzu8a9uuIt0JjXJn19R-_Hl9rTuD3qkfJ42Vt8-wX5LdhABW0ddkQUFUhHT572FRjuL/exec"; 
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwKbY73QCZqIBFmgTz_OmGTKOnf3k2tFMuANEmoPPiuCWGujLzDgJYF1SLSFl1TrSik/exec"; 
     const ADMIN_PASSWORD = "admin123";
 
     const branches = ["Head Office", "Ambalangoda", "Akuressa", "Ampara", "Anuradhapura", "Avissawella", "Ambalantota", "Balangoda", "Batticaloa", "Bandarawela", "Bentota", "Chilaw", "Chunnakkam", "Eheliyagoda", "Elakanda", "Elpitiya", "Embilipitiya", "Galle", "Gampaha", "Gampola", "Giriulla", "Godagama", "Hatton", "Hanwella", "Horana", "Horana Town", "Ja-ela", "Jaffna", "Kaduruwela", "Karapitiya", "Katugastota", "Kesbewa", "Kaduwela", "Kekirawa", "Kotahena", "Kalutara", "Kilinochchi", "Kurunegala", "Kuliyapitiya", "Kottawa", "Kandy", "Kegalle", "Kohuwala", "Kochchikade", "Matugama", "Malabe", "Maharagama", "Mahara", "Manipay", "Mattakkuliya", "Matale", "Mawathagama", "Moratuwa", "Maradana", "Matara", "Minuwangoda", "Negombo", "Nelliyadi", "Neluwa", "Nawalapitiya", "Nittambuwa", "Nikaweratiya", "Nuwaraeliya", "Norochchole", "Panadura", "Polonnaruwa", "Premier Center", "Pussellawa", "Puthukkudiyiriuppu", "Puttlam", "Pelawatte", "Ragala", "Rathnapura", "Thalawakele", "Thambuththegama", "Thissamaharama", "Trincomalee", "Veyangoda", "Vauniya", "Wellawatte", "Welimada", "Wennappuwa", "Warakapola", "Wattala", "Kalawanchikudy", "Kiribathgoda", "Kurunegala City", "Colombo City", "Weligama", "Negombo City", "Tangalle", "Dambulla"];
 
-    // 2. RUN ON STARTUP
-    window.addEventListener('DOMContentLoaded', (event) => {
-        console.log("DOM fully loaded and parsed");
+    let isAdmin = false;
+
+    // 2. INITIALIZE UI
+    window.addEventListener('DOMContentLoaded', () => {
         populateDropdown(branches);
         document.getElementById('trDate').valueAsDate = new Date();
         renderTable();
+        console.log("System Initialized");
     });
 
-    // 3. DROPDOWN LOGIC
     function populateDropdown(list) {
         const sel = document.getElementById('branchSelect');
         if (!sel) return;
@@ -210,31 +211,61 @@
         list.sort().forEach(b => {
             let opt = document.createElement('option');
             opt.value = b;
-            opt.innerHTML = b;
+            opt.text = b;
             sel.appendChild(opt);
         });
     }
 
     function filterBranches(searchText) {
-        const filtered = branches.filter(b => 
-            b.toLowerCase().includes(searchText.toLowerCase())
-        );
+        const filtered = branches.filter(b => b.toLowerCase().includes(searchText.toLowerCase()));
         populateDropdown(filtered);
     }
 
-    // 4. SAVE LOGIC (SERVER SYNC)
+    // 3. ADMIN LOGIC (FIXED)
+    function showLogin() { 
+        document.getElementById('loginOverlay').style.display = 'flex'; 
+    }
+    
+    function closeLogin() { 
+        document.getElementById('loginOverlay').style.display = 'none'; 
+    }
+
+    function logout() {
+        location.reload(); // Refresh page to clear admin state
+    }
+
+    function attemptLogin() {
+        const enteredPass = document.getElementById('adminPass').value;
+        console.log("Attempting login...");
+
+        if(enteredPass === ADMIN_PASSWORD) {
+            isAdmin = true;
+            // Show Admin UI Elements
+            document.getElementById('adminBadge').style.display = 'block';
+            document.getElementById('logoutBtn').style.display = 'block';
+            document.getElementById('reprintArea').style.display = 'block';
+            document.getElementById('adminBtn').style.display = 'none';
+            
+            // Allow table rows to be clickable for editing
+            document.getElementById('logTable').classList.add('admin-mode');
+            
+            alert("Admin Access Granted");
+            closeLogin();
+        } else {
+            alert("Incorrect Password");
+        }
+    }
+
+    // 4. SAVE & PRINT LOGIC
     async function handleSaveAndPrint() {
         const saveBtn = document.getElementById('saveBtn');
         const amount = document.getElementById('trAmount').value;
         const name = document.getElementById('trFrom').value;
         
-        if(!name || !amount) {
-            alert("Please enter Name and Amount.");
-            return;
-        }
+        if(!name || !amount) return alert("Fill Name and Amount.");
 
         saveBtn.disabled = true;
-        saveBtn.innerText = "Syncing...";
+        saveBtn.innerText = "Syncing with Server...";
 
         const payload = {
             branch: document.getElementById('branchSelect').value,
@@ -252,13 +283,16 @@
                 method: "POST",
                 body: JSON.stringify(payload)
             });
-            
-            // Note: If Google Script doesn't return JSON, this line will fail
             const result = await response.json();
 
             if (result.result === "success") {
                 payload.id = result.generatedId; 
-                saveLocal(payload);
+                
+                // Add to Local History
+                let logs = JSON.parse(localStorage.getItem('tr_final_logs') || "[]");
+                logs.push(payload);
+                localStorage.setItem('tr_final_logs', JSON.stringify(logs));
+
                 mapToPrint(payload);
                 window.print();
                 resetUI();
@@ -266,15 +300,15 @@
                 alert("Server Error: " + result.error);
             }
         } catch (e) {
-            console.error("Fetch Error:", e);
-            alert("Submission Failed. Check Console for details.");
+            alert("Connection Error. Is the Google Script URL correct?");
+            console.error(e);
         } finally {
             saveBtn.disabled = false;
             saveBtn.innerText = "Save & Print";
         }
     }
 
-    // 5. HELPER FUNCTIONS
+    // 5. HELPERS
     function updateAmountUI() {
         const val = document.getElementById('trAmount').value;
         document.getElementById('trWords').value = val ? numToWords(parseInt(val)) : "";
@@ -299,12 +333,6 @@
         return str.trim() + " Rupees Only";
     }
 
-    function saveLocal(data) {
-        let logs = JSON.parse(localStorage.getItem('tr_final_logs') || "[]");
-        logs.push(data);
-        localStorage.setItem('tr_final_logs', JSON.stringify(logs));
-    }
-
     function mapToPrint(data) {
         document.getElementById('pNo').innerText = data.id;
         document.getElementById('pDate').innerText = data.date;
@@ -317,21 +345,13 @@
         document.getElementById('pCheque').innerText = data.method === 'Cheque' ? data.amount : '-';
     }
 
-    function resetUI() {
-        ['trFrom', 'trMobile', 'trAmount', 'trAs', 'trWords'].forEach(id => {
-            const el = document.getElementById(id);
-            if(el) el.value = '';
-        });
-        renderTable();
-    }
-
     function renderTable() {
         const logs = JSON.parse(localStorage.getItem('tr_final_logs') || "[]");
         const tbody = document.querySelector('#logTable tbody');
         if(!tbody) return;
         tbody.innerHTML = logs.slice(-10).reverse().map(l => `
             <tr>
-                <td><b>${l.id || 'N/A'}</b></td>
+                <td><b>${l.id || 'SYNCING...'}</b></td>
                 <td>${l.branch}</td>
                 <td>${l.name}</td>
                 <td>${l.mobile || '-'}</td>
@@ -341,14 +361,12 @@
         `).join('');
     }
 
-    // Login logic
-    function showLogin() { document.getElementById('loginOverlay').style.display = 'flex'; }
-    function closeLogin() { document.getElementById('loginOverlay').style.display = 'none'; }
-    function attemptLogin() {
-        if(document.getElementById('adminPass').value === ADMIN_PASSWORD) {
-            alert("Admin Mode Active");
-            closeLogin();
-        } else { alert("Wrong password"); }
+    function resetUI() {
+        ['trFrom', 'trMobile', 'trAmount', 'trAs', 'trWords'].forEach(id => {
+            const el = document.getElementById(id);
+            if(el) el.value = '';
+        });
+        renderTable();
     }
 </script>
 </body>
