@@ -130,12 +130,12 @@
         </div>
     </div>
     
-    <div class="button-group">
-        <button id="saveBtn" class="btn-print" onclick="handleSaveAndPrint()">Save & Print</button>
-        <button id="updateBtn" class="btn-update" onclick="handleUpdate()">Update & Save Changes</button>
-        <button id="deleteBtn" class="btn-delete" onclick="handleDelete()">Delete Record</button>
-        <button class="btn-excel" onclick="exportToExcel()">Export CSV</button>
-    </div>
+   <div class="button-group">
+    <button id="saveBtn" class="btn-print" onclick="handleSaveAndPrint()">Save & Print</button>
+    <button id="updateBtn" class="btn-update" onclick="handleUpdate()" style="display:none;">Update & Save Changes</button>
+    <button id="deleteBtn" class="btn-delete" onclick="handleDelete()" style="display:none;">Delete Record</button>
+    <button class="btn-excel" onclick="exportToExcel()">Export CSV</button>
+</div>
 
     <div class="log-container">
         <h3>Recent Transactions <small id="adminHint" style="display:none; font-weight: normal; color: var(--admin); font-size: 0.7em;">(Click to Edit/Delete)</small></h3>
@@ -346,29 +346,147 @@
         document.getElementById('pCheque').innerText = data.method === 'Cheque' ? data.amount : '-';
     }
 
-    function renderTable() {
-        const logs = JSON.parse(localStorage.getItem('tr_final_logs') || "[]");
-        const tbody = document.querySelector('#logTable tbody');
-        if(!tbody) return;
-        tbody.innerHTML = logs.slice(-10).reverse().map(l => `
-            <tr>
-                <td><b>${l.id || '...'}</b></td>
-                <td>${l.branch}</td>
-                <td>${l.name}</td>
-                <td>${l.mobile || '-'}</td>
-                <td>${Number(l.amount).toLocaleString()}</td>
-                <td>${l.date}</td>
-            </tr>
-        `).join('');
-    }
+   function renderTable() {
+    const logs = JSON.parse(localStorage.getItem('tr_final_logs') || "[]");
+    const tbody = document.querySelector('#logTable tbody');
+    if(!tbody) return;
+    
+    tbody.innerHTML = logs.slice(-15).reverse().map(l => `
+        <tr onclick="loadForEdit('${l.id}')" style="cursor: ${isAdmin ? 'pointer' : 'default'}">
+            <td><b>${l.id || '...'}</b></td>
+            <td>${l.branch}</td>
+            <td>${l.name}</td>
+            <td>${l.mobile || '-'}</td>
+            <td>${Number(l.amount).toLocaleString()}</td>
+            <td>${l.date}</td>
+        </tr>
+    `).join('');
+}
 
     function resetUI() {
-        ['trFrom', 'trMobile', 'trAmount', 'trAs', 'trWords'].forEach(id => {
-            const el = document.getElementById(id);
-            if(el) el.value = '';
-        });
-        renderTable();
+    ['trFrom', 'trMobile', 'trAmount', 'trAs', 'trWords'].forEach(id => {
+        const el = document.getElementById(id);
+        if(el) el.value = '';
+    });
+    
+    // Reset Buttons
+    document.getElementById('saveBtn').style.display = 'block';
+    document.getElementById('updateBtn').style.display = 'none';
+    document.getElementById('deleteBtn').style.display = 'none';
+    window.editingId = null;
+    
+    renderTable();
+}
+    // --- ADMIN EDIT LOGIC ---
+
+// This function runs when you click a row in the table
+function loadForEdit(id) {
+    if(!isAdmin) return; // Only work if logged in
+    
+    const logs = JSON.parse(localStorage.getItem('tr_final_logs') || "[]");
+    const entry = logs.find(l => l.id === id);
+    
+    if(entry) {
+        // 1. Fill the form with the existing data
+        document.getElementById('trFrom').value = entry.name;
+        document.getElementById('trMobile').value = entry.mobile || "";
+        document.getElementById('trAmount').value = entry.amount;
+        document.getElementById('trAs').value = entry.as;
+        document.getElementById('payMethod').value = entry.method;
+        document.getElementById('trDate').value = entry.date;
+        document.getElementById('branchSelect').value = entry.branch;
+        
+        // Use a hidden field or a temporary property to store the ID we are editing
+        window.editingId = entry.id; 
+        
+        updateAmountUI(); // Refresh the words
+        
+        // 2. Swap the buttons
+        document.getElementById('saveBtn').style.display = 'none';
+        document.getElementById('updateBtn').style.display = 'block';
+        document.getElementById('deleteBtn').style.display = 'block';
+        
+        // 3. Scroll to top so the user sees the form
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+}
+
+async function handleUpdate() {
+    if(!confirm("Are you sure you want to update this record?")) return;
+    
+    const id = window.editingId;
+    let logs = JSON.parse(localStorage.getItem('tr_final_logs') || "[]");
+    const idx = logs.findIndex(l => l.id === id);
+    
+    if(idx > -1) {
+        const updatedData = {
+            id: id,
+            branch: document.getElementById('branchSelect').value,
+            date: document.getElementById('trDate').value,
+            name: document.getElementById('trFrom').value,
+            mobile: document.getElementById('trMobile').value,
+            amount: document.getElementById('trAmount').value,
+            words: document.getElementById('trWords').value,
+            as: document.getElementById('trAs').value,
+            method: document.getElementById('payMethod').value,
+            action: "UPDATE" // Tells Google Script to update existing row
+        };
+
+        // Update Local
+        logs[idx] = updatedData;
+        localStorage.setItem('tr_final_logs', JSON.stringify(logs));
+        
+        // Update Server
+        try {
+            await fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify(updatedData)});
+            alert("Entry Updated Successfully!");
+        } catch(e) {
+            alert("Local update saved, but server sync failed.");
+        }
+        
+        resetUI();
+    }
+}
+
+async function handleDelete() {
+    if(!confirm("PERMANENTLY DELETE this TR? This cannot be undone.")) return;
+    
+    const id = window.editingId;
+    let logs = JSON.parse(localStorage.getItem('tr_final_logs') || "[]");
+    
+    // Remove from Local
+    logs = logs.filter(l => l.id !== id);
+    localStorage.setItem('tr_final_logs', JSON.stringify(logs));
+    
+    // Sync with Server (Tell it to cancel/delete)
+    try {
+        await fetch(GOOGLE_SCRIPT_URL, { 
+            method: "POST", 
+            body: JSON.stringify({ id: id, action: "CANCEL" })
+        });
+        alert("Record Deleted.");
+    } catch(e) {
+        alert("Deleted locally, server sync failed.");
+    }
+    
+    resetUI();
+}
+    function exportToExcel() {
+    const logs = JSON.parse(localStorage.getItem('tr_final_logs') || "[]");
+    if(logs.length === 0) return alert("No data to export");
+
+    let csv = "TR Code,Branch,Date,Name,Mobile,Amount,Purpose,Method\n";
+    logs.forEach(l => {
+        csv += `${l.id},${l.branch},${l.date},"${l.name}","${l.mobile}",${l.amount},"${l.as}",${l.method}\n`;
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.setAttribute('href', url);
+    a.setAttribute('download', `TR_Report_${new Date().toLocaleDateString()}.csv`);
+    a.click();
+}
 </script>
 </body>
 </html>
