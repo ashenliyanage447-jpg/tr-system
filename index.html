@@ -366,16 +366,48 @@
     }
 
     function mapToPrint(data) {
-        document.getElementById('pNo').innerText = data.id;
-        document.getElementById('pDate').innerText = data.date;
-        document.getElementById('pFrom').innerText = data.name;
-        document.getElementById('pMobile').innerText = data.mobile || '-';
-        document.getElementById('pWords').innerText = data.words;
-        document.getElementById('pAs').innerText = data.as;
-        document.getElementById('pTotal').innerText = Number(data.amount).toLocaleString('en-LK', {minimumFractionDigits: 2});
-        document.getElementById('pCash').innerText = data.method === 'Cash' ? data.amount : '-';
-        document.getElementById('pCheque').innerText = data.method === 'Cheque' ? data.amount : '-';
+    // Fill the hidden receipt fields
+    document.getElementById('pNo').innerText = data.id || "N/A";
+    document.getElementById('pDate').innerText = data.date || "";
+    document.getElementById('pFrom').innerText = data.name || "";
+    document.getElementById('pMobile').innerText = data.mobile || '-';
+    document.getElementById('pWords').innerText = data.words || "";
+    document.getElementById('pAs').innerText = data.as || "";
+    
+    // Format the currency
+    const formattedAmount = Number(data.amount).toLocaleString('en-LK', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+    
+    document.getElementById('pTotal').innerText = formattedAmount;
+    document.getElementById('pCash').innerText = data.method === 'Cash' ? formattedAmount : '-';
+    document.getElementById('pCheque').innerText = data.method === 'Cheque' ? formattedAmount : '-';
+}
+
+    function executeReprint() {
+    const searchId = document.getElementById('reprintSearchInput').value.trim().toUpperCase();
+    if (!searchId) return alert("Please enter a TR Number (e.g., COL-0001)");
+
+    // 1. Get all logs from local storage
+    const logs = JSON.parse(localStorage.getItem('tr_final_logs') || "[]");
+    
+    // 2. Find the specific record
+    const record = logs.find(l => l.id === searchId);
+
+    if (record) {
+        // 3. Map the data to the hidden print receipt
+        mapToPrint(record);
+        
+        // 4. Trigger the print window
+        setTimeout(() => {
+            window.print();
+            document.getElementById('reprintSearchInput').value = ""; // Clear search
+        }, 500);
+    } else {
+        alert("Record not found in local history. Ensure the TR Number is correct.");
     }
+}
 
     function exportToExcel() {
         const logs = JSON.parse(localStorage.getItem('tr_final_logs') || "[]");
