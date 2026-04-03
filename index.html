@@ -254,21 +254,60 @@
         document.getElementById('trWords').value = val ? numToWords(parseInt(val)) : "";
     }
 
-    function handleSaveAndPrint() {
-        const amount = document.getElementById('trAmount').value;
-        const name = document.getElementById('trFrom').value;
-        if(!name || !amount) return alert("Fill Name and Amount.");
+   async function handleSaveAndPrint() {
+    const saveBtn = document.getElementById('saveBtn');
+    const amount = document.getElementById('trAmount').value;
+    const name = document.getElementById('trFrom').value;
+    
+    if(!name || !amount) return alert("Fill Name and Amount.");
 
-        const data = {
-            id: document.getElementById('trNo').value,
-            branch: document.getElementById('branchSelect').value,
-            date: document.getElementById('trDate').value,
-            name, mobile: document.getElementById('trMobile').value,
-            amount, words: document.getElementById('trWords').value,
-            as: document.getElementById('trAs').value,
-            method: document.getElementById('payMethod').value
-        };
+    // 1. Disable button and show "Loading"
+    saveBtn.disabled = true;
+    saveBtn.innerText = "Syncing with Server...";
 
+    const data = {
+        branch: document.getElementById('branchSelect').value,
+        date: document.getElementById('trDate').value,
+        name: name,
+        mobile: document.getElementById('trMobile').value,
+        amount: amount,
+        words: document.getElementById('trWords').value,
+        as: document.getElementById('trAs').value,
+        method: document.getElementById('payMethod').value
+    };
+
+    try {
+        // 2. Send to Google Script and WAIT for the response
+        const response = await fetch(GOOGLE_SCRIPT_URL, {
+            method: "POST",
+            body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+
+        if (result.result === "success") {
+            // 3. Use the ID the server gave us
+            data.id = result.generatedId; 
+            
+            // Save to local storage for the table view
+            let logs = JSON.parse(localStorage.getItem('tr_final_logs') || "[]");
+            logs.push(data);
+            localStorage.setItem('tr_final_logs', JSON.stringify(logs));
+
+            // 4. Print and Reset
+            mapToPrint(data);
+            window.print();
+            resetUI();
+        } else {
+            alert("Error: " + result.error);
+        }
+    } catch (e) {
+        alert("Connection Error. Please check your internet.");
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.innerText = "Save & Print";
+    }
+}
         let logs = JSON.parse(localStorage.getItem('tr_final_logs') || "[]");
         logs.push(data);
         localStorage.setItem('tr_final_logs', JSON.stringify(logs));
