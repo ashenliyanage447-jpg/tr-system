@@ -188,84 +188,50 @@
 </div>
 
 <script>
-    // 1. SET YOUR URL HERE
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzu8a9uuIt0JjXJn19R-_Hl9rTuD3qkfJ42Vt8-wX5LdhABW0ddkQUFUhHT572FRjuL/exec"; 
+   // 1. YOUR SETTINGS
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwKbY73QCZqIBFmgTz_OmGTKOnf3k2tFMuANEmoPPiuCWGujLzDgJYF1SLSFl1TrSik/exec"; 
+const ADMIN_PASSWORD = "admin123"; // Suggest moving this to Google Script later
+
+// 2. DATA
+const branches = ["Head Office", "Ambalangoda", "Akuressa", "Ampara", "Anuradhapura", "Avissawella", "Ambalantota", "Balangoda", "Batticaloa", "Bandarawela", "Bentota", "Chilaw", "Chunnakkam", "Eheliyagoda", "Elakanda", "Elpitiya", "Embilipitiya", "Galle", "Gampaha", "Gampola", "Giriulla", "Godagama", "Hatton", "Hanwella", "Horana", "Horana Town", "Ja-ela", "Jaffna", "Kaduruwela", "Karapitiya", "Katugastota", "Kesbewa", "Kaduwela", "Kekirawa", "Kotahena", "Kalutara", "Kilinochchi", "Kurunegala", "Kuliyapitiya", "Kottawa", "Kandy", "Kegalle", "Kohuwala", "Kochchikade", "Matugama", "Malabe", "Maharagama", "Mahara", "Manipay", "Mattakkuliya", "Matale", "Mawathagama", "Moratuwa", "Maradana", "Matara", "Minuwangoda", "Negombo", "Nelliyadi", "Neluwa", "Nawalapitiya", "Nittambuwa", "Nikaweratiya", "Nuwaraeliya", "Norochchole", "Panadura", "Polonnaruwa", "Premier Center", "Pussellawa", "Puthukkudiyiriuppu", "Puttlam", "Pelawatte", "Ragala", "Rathnapura", "Thalawakele", "Thambuththegama", "Thissamaharama", "Trincomalee", "Veyangoda", "Vauniya", "Wellawatte", "Welimada", "Wennappuwa", "Warakapola", "Wattala", "Kalawanchikudy", "Kiribathgoda", "Kurunegala City", "Colombo City", "Weligama", "Negombo City", "Tangalle", "Dambulla"];
+
+let isAdmin = false;
+
+// 3. INITIALIZATION
+window.onload = () => {
+    // Populate dropdown immediately
+    const sel = document.getElementById('branchSelect');
+    branches.sort().forEach(b => sel.add(new Option(b, b)));
     
-    const ADMIN_PASSWORD = "admin123";
-    const branches = ["Head Office", "Ambalangoda", "Akuressa", "Ampara", "Anuradhapura", "Avissawella", "Ambalantota", "Balangoda", "Batticaloa", "Bandarawela", "Bentota", "Chilaw", "Chunnakkam", "Eheliyagoda", "Elakanda", "Elpitiya", "Embilipitiya", "Galle", "Gampaha", "Gampola", "Giriulla", "Godagama", "Hatton", "Hanwella", "Horana", "Horana Town", "Ja-ela", "Jaffna", "Kaduruwela", "Karapitiya", "Katugastota", "Kesbewa", "Kaduwela", "Kekirawa", "Kotahena", "Kalutara", "Kilinochchi", "Kurunegala", "Kuliyapitiya", "Kottawa", "Kandy", "Kegalle", "Kohuwala", "Kochchikade", "Matugama", "Malabe", "Maharagama", "Mahara", "Manipay", "Mattakkuliya", "Matale", "Mawathagama", "Moratuwa", "Maradana", "Matara", "Minuwangoda", "Negombo", "Nelliyadi", "Neluwa", "Nawalapitiya", "Nittambuwa", "Nikaweratiya", "Nuwaraeliya", "Norochchole", "Panadura", "Polonnaruwa", "Premier Center", "Pussellawa", "Puthukkudiyiriuppu", "Puttlam", "Pelawatte", "Ragala", "Rathnapura", "Thalawakele", "Thambuththegama", "Thissamaharama", "Trincomalee", "Veyangoda", "Vauniya", "Wellawatte", "Welimada", "Wennappuwa", "Warakapola", "Wattala", "Kalawanchikudy", "Kiribathgoda", "Kurunegala City", "Colombo City", "Weligama", "Negombo City", "Tangalle", "Dambulla"];
-    let isAdmin = false;
+    document.getElementById('trDate').valueAsDate = new Date();
+    renderTable();
+};
 
-    window.onload = () => {
-        filterBranches(""); 
-        document.getElementById('trDate').valueAsDate = new Date();
-        renderTable();
-    };
+// 4. BRANCH FILTER LOGIC
+function filterBranches(searchText) {
+    const sel = document.getElementById('branchSelect');
+    sel.innerHTML = "";
+    const filtered = branches
+        .filter(b => b.toLowerCase().includes(searchText.toLowerCase()))
+        .sort();
+    
+    filtered.forEach(b => sel.add(new Option(b, b)));
+}
 
-    // --- Google Sheets Sync Function ---
-    async function syncToSheets(data, actionType) {
-        if (!GOOGLE_SCRIPT_URL.startsWith("http")) return;
-        try {
-            fetch(GOOGLE_SCRIPT_URL, {
-                method: "POST",
-                mode: "no-cors",
-                body: JSON.stringify({ ...data, action: actionType })
-            });
-        } catch (e) { console.error("Sync Failed", e); }
-    }
-
-    // --- Admin Logic ---
-    function showLogin() { document.getElementById('loginOverlay').style.display = 'flex'; }
-    function closeLogin() { document.getElementById('loginOverlay').style.display = 'none'; }
-    function logout() { location.reload(); }
-    function attemptLogin() {
-        if(document.getElementById('adminPass').value === ADMIN_PASSWORD) {
-            isAdmin = true;
-            document.getElementById('adminBadge').style.display = 'block';
-            document.getElementById('logoutBtn').style.display = 'block';
-            document.getElementById('reprintArea').style.display = 'block';
-            document.getElementById('adminHint').style.display = 'inline';
-            document.getElementById('adminBtn').style.display = 'none';
-            document.getElementById('logTable').classList.add('admin-mode');
-            closeLogin();
-            renderTable();
-        } else { alert("Incorrect Password"); }
-    }
-
-    // --- Core Operations ---
-    function filterBranches(searchText) {
-        const sel = document.getElementById('branchSelect');
-        sel.innerHTML = "";
-        const filtered = branches.filter(b => b.toLowerCase().includes(searchText.toLowerCase())).sort();
-        filtered.forEach(b => sel.add(new Option(b, b)));
-        generateTRNumber();
-    }
-
-    function generateTRNumber() {
-        if(document.getElementById('updateBtn').style.display === 'block') return;
-        const branch = document.getElementById('branchSelect').value;
-        const logs = JSON.parse(localStorage.getItem('tr_final_logs') || "[]");
-        const count = logs.filter(l => l.branch === branch).length;
-        const prefix = (branch || "XXX").substring(0, 3).toUpperCase();
-        document.getElementById('trNo').value = `${prefix}-${(count + 1).toString().padStart(4, '0')}`;
-    }
-
-    function updateAmountUI() {
-        const val = document.getElementById('trAmount').value;
-        document.getElementById('trWords').value = val ? numToWords(parseInt(val)) : "";
-    }
-
-   async function handleSaveAndPrint() {
+// 5. CORE OPERATIONS (SERVER SYNC)
+async function handleSaveAndPrint() {
     const saveBtn = document.getElementById('saveBtn');
     const amount = document.getElementById('trAmount').value;
     const name = document.getElementById('trFrom').value;
     
-    if(!name || !amount) return alert("Fill Name and Amount.");
+    if(!name || !amount) return alert("Please enter Client Name and Amount.");
 
-    // 1. Disable button and show "Loading"
+    // Visual Feedback
     saveBtn.disabled = true;
-    saveBtn.innerText = "Syncing with Server...";
+    saveBtn.innerText = "Requesting TR Number...";
+    saveBtn.style.opacity = "0.5";
 
-    const data = {
+    const payload = {
         branch: document.getElementById('branchSelect').value,
         date: document.getElementById('trDate').value,
         name: name,
@@ -273,178 +239,114 @@
         amount: amount,
         words: document.getElementById('trWords').value,
         as: document.getElementById('trAs').value,
-        method: document.getElementById('payMethod').value
+        method: document.getElementById('payMethod').value,
+        action: "SAVE"
     };
 
     try {
-        // 2. Send to Google Script and WAIT for the response
+        // Send to Google Script and Wait for the LOCK and ID generation
         const response = await fetch(GOOGLE_SCRIPT_URL, {
             method: "POST",
-            body: JSON.stringify(data)
+            body: JSON.stringify(payload)
         });
         
         const result = await response.json();
 
         if (result.result === "success") {
-            // 3. Use the ID the server gave us
-            data.id = result.generatedId; 
+            // Apply the ID returned by the server
+            payload.id = result.generatedId; 
             
-            // Save to local storage for the table view
+            // Save to local history
             let logs = JSON.parse(localStorage.getItem('tr_final_logs') || "[]");
-            logs.push(data);
+            logs.push(payload);
             localStorage.setItem('tr_final_logs', JSON.stringify(logs));
 
-            // 4. Print and Reset
-            mapToPrint(data);
+            // Print & Reset
+            mapToPrint(payload);
             window.print();
             resetUI();
         } else {
-            alert("Error: " + result.error);
+            alert("Server Error: " + result.error);
         }
     } catch (e) {
-        alert("Connection Error. Please check your internet.");
+        console.error(e);
+        alert("Network Error: Could not connect to the server. Check your internet.");
     } finally {
         saveBtn.disabled = false;
         saveBtn.innerText = "Save & Print";
+        saveBtn.style.opacity = "1";
     }
 }
-        let logs = JSON.parse(localStorage.getItem('tr_final_logs') || "[]");
-        logs.push(data);
-        localStorage.setItem('tr_final_logs', JSON.stringify(logs));
-        
-        syncToSheets(data, "SAVE");
-        mapToPrint(data);
-        window.print();
-        resetUI();
-    }
 
-    // --- Admin Edit/Delete Actions ---
-    function loadForEdit(id) {
-        if(!isAdmin) return;
-        const logs = JSON.parse(localStorage.getItem('tr_final_logs') || "[]");
-        const entry = logs.find(l => l.id === id);
-        if(entry) {
-            document.getElementById('trNo').value = entry.id;
-            document.getElementById('branchSelect').value = entry.branch;
-            document.getElementById('trFrom').value = entry.name;
-            document.getElementById('trMobile').value = entry.mobile || "";
-            document.getElementById('trAmount').value = entry.amount;
-            document.getElementById('trAs').value = entry.as;
-            document.getElementById('payMethod').value = entry.method;
-            document.getElementById('trDate').value = entry.date;
-            updateAmountUI();
-            
-            document.getElementById('saveBtn').style.display = 'none';
-            document.getElementById('updateBtn').style.display = 'block';
-            document.getElementById('deleteBtn').style.display = 'block';
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-    }
+// 6. UTILITY FUNCTIONS
+function updateAmountUI() {
+    const val = document.getElementById('trAmount').value;
+    document.getElementById('trWords').value = val ? numToWords(parseInt(val)) : "";
+}
 
-    function handleUpdate() {
-        const id = document.getElementById('trNo').value;
-        let logs = JSON.parse(localStorage.getItem('tr_final_logs') || "[]");
-        const idx = logs.findIndex(l => l.id === id);
-        if(idx > -1) {
-            const updatedData = {
-                id, branch: document.getElementById('branchSelect').value,
-                date: document.getElementById('trDate').value,
-                name: document.getElementById('trFrom').value,
-                mobile: document.getElementById('trMobile').value,
-                amount: document.getElementById('trAmount').value,
-                words: document.getElementById('trWords').value,
-                as: document.getElementById('trAs').value,
-                method: document.getElementById('payMethod').value
-            };
-            logs[idx] = updatedData;
-            localStorage.setItem('tr_final_logs', JSON.stringify(logs));
-            syncToSheets(updatedData, "UPDATE");
-            alert("Entry Updated!");
-            resetUI();
-        }
-    }
+function numToWords(n) {
+    if (n === 0) return "Zero Rupees Only";
+    const a = ['', 'One ', 'Two ', 'Three ', 'Four ', 'Five ', 'Six ', 'Seven ', 'Eight ', 'Nine ', 'Ten ', 'Eleven ', 'Twelve ', 'Thirteen ', 'Fourteen ', 'Fifteen ', 'Sixteen ', 'Seventeen ', 'Eighteen ', 'Nineteen '];
+    const b = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+    const format = (num, suffix) => {
+        if (num === 0) return '';
+        if (num > 19) return b[Math.floor(num / 10)] + ' ' + a[num % 10] + suffix;
+        return a[num] + suffix;
+    };
+    let str = '';
+    str += format(Math.floor(n / 10000000), 'Crore ');
+    str += format(Math.floor((n / 100000) % 100), 'Lakh ');
+    str += format(Math.floor((n / 1000) % 100), 'Thousand ');
+    str += format(Math.floor((n / 100) % 10), 'Hundred ');
+    if (n > 100 && n % 100 !== 0) str += 'and ';
+    str += format(n % 100, '');
+    return str.trim() + " Rupees Only";
+}
 
-    function handleDelete() {
-        const id = document.getElementById('trNo').value;
-        if(confirm("Confirm deletion of TR: " + id)) {
-            let logs = JSON.parse(localStorage.getItem('tr_final_logs') || "[]");
-            logs = logs.filter(l => l.id !== id);
-            localStorage.setItem('tr_final_logs', JSON.stringify(logs));
-            syncToSheets({ id }, "CANCEL");
-            resetUI();
-        }
-    }
+function mapToPrint(data) {
+    document.getElementById('pNo').innerText = data.id;
+    document.getElementById('pDate').innerText = data.date;
+    document.getElementById('pFrom').innerText = data.name;
+    document.getElementById('pMobile').innerText = data.mobile || '-';
+    document.getElementById('pWords').innerText = data.words;
+    document.getElementById('pAs').innerText = data.as;
+    document.getElementById('pTotal').innerText = Number(data.amount).toLocaleString('en-LK', {minimumFractionDigits: 2});
+    document.getElementById('pCash').innerText = data.method === 'Cash' ? data.amount : '-';
+    document.getElementById('pCheque').innerText = data.method === 'Cheque' ? data.amount : '-';
+}
 
-    function executeReprint() {
-        const searchId = document.getElementById('reprintSearchInput').value.trim().toUpperCase();
-        const logs = JSON.parse(localStorage.getItem('tr_final_logs') || "[]");
-        const entry = logs.find(l => l.id.toUpperCase() === searchId);
-        if(entry) { mapToPrint(entry); window.print(); } else { alert("TR Not Found."); }
-    }
+function resetUI() {
+    ['trFrom', 'trMobile', 'trAmount', 'trAs', 'trWords'].forEach(id => document.getElementById(id).value = '');
+    renderTable();
+}
 
-    function mapToPrint(data) {
-        document.getElementById('pNo').innerText = data.id;
-        document.getElementById('pDate').innerText = data.date;
-        document.getElementById('pFrom').innerText = data.name;
-        document.getElementById('pMobile').innerText = data.mobile || '-';
-        document.getElementById('pWords').innerText = data.words;
-        document.getElementById('pAs').innerText = data.as;
-        document.getElementById('pTotal').innerText = Number(data.amount).toLocaleString('en-LK', {minimumFractionDigits: 2});
-        document.getElementById('pCash').innerText = data.method === 'Cash' ? data.amount : '-';
-        document.getElementById('pCheque').innerText = data.method === 'Cheque' ? data.amount : '-';
-    }
+function renderTable() {
+    const logs = JSON.parse(localStorage.getItem('tr_final_logs') || "[]");
+    const tbody = document.querySelector('#logTable tbody');
+    tbody.innerHTML = logs.slice(-15).reverse().map(l => `
+        <tr>
+            <td><b>${l.id}</b></td>
+            <td>${l.branch}</td>
+            <td>${l.name}</td>
+            <td>${l.mobile || '-'}</td>
+            <td>${Number(l.amount).toLocaleString()}</td>
+            <td>${l.date}</td>
+        </tr>
+    `).join('');
+}
 
-    function resetUI() {
-        ['trFrom', 'trMobile', 'trAmount', 'trAs', 'trWords'].forEach(id => document.getElementById(id).value = '');
-        document.getElementById('saveBtn').style.display = 'block';
-        document.getElementById('updateBtn').style.display = 'none';
-        document.getElementById('deleteBtn').style.display = 'none';
-        generateTRNumber();
-        renderTable();
-    }
-
-    function renderTable() {
-        const logs = JSON.parse(localStorage.getItem('tr_final_logs') || "[]");
-        const tbody = document.querySelector('#logTable tbody');
-        tbody.innerHTML = logs.slice(-15).reverse().map(l => `
-            <tr onclick="loadForEdit('${l.id}')">
-                <td><b>${l.id}</b></td>
-                <td>${l.branch}</td>
-                <td>${l.name}</td>
-                <td>${l.mobile || '-'}</td>
-                <td>${Number(l.amount).toLocaleString()}</td>
-                <td>${l.date}</td>
-            </tr>
-        `).join('');
-    }
-
-    function numToWords(n) {
-        if (n === 0) return "Zero Rupees Only";
-        const a = ['','One ','Two ','Three ','Four ','Five ','Six ','Seven ','Eight ','Nine ','Ten ','Eleven ','Twelve ','Thirteen ','Fourteen ','Fifteen ','Sixteen ','Seventeen ','Eighteen ','Nineteen '];
-        const b = ['', '', 'Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety'];
-        const makeWords = (num) => {
-            let n = ('000000000' + num).substr(-9).match(/^(\d{2})(\d{2})(\d{2})(\d{1})(\d{2})$/);
-            if (!n) return ''; let str = '';
-            str += (n[1] != 0) ? (a[Number(n[1])] || b[n[1][0]] + ' ' + a[n[1][1]]) + 'Crore ' : '';
-            str += (n[2] != 0) ? (a[Number(n[2])] || b[n[2][0]] + ' ' + a[n[2][1]]) + 'Lakh ' : '';
-            str += (n[3] != 0) ? (a[Number(n[3])] || b[n[3][0]] + ' ' + a[n[3][1]]) + 'Thousand ' : '';
-            str += (n[4] != 0) ? (a[Number(n[4])] || b[n[4][0]] + ' ' + a[n[4][1]]) + 'Hundred ' : '';
-            str += (n[5] != 0) ? ((str != '') ? 'and ' : '') + (a[Number(n[5])] || b[n[5][0]] + ' ' + a[n[5][1]]) : '';
-            return str;
-        }
-        return makeWords(n).trim() + " Rupees Only";
-    }
-
-    function exportToExcel() {
-        const logs = JSON.parse(localStorage.getItem('tr_final_logs') || "[]");
-        let csv = "TR Code,Branch,Date,Name,Mobile,Amount,Purpose,Method\n" + 
-            logs.map(l => `${l.id},${l.branch},${l.date},"${l.name}","${l.mobile}",${l.amount},"${l.as}",${l.method}`).join("\n");
-        const blob = new Blob([csv], { type: 'text/csv' });
-        const a = document.createElement('a');
-        a.href = window.URL.createObjectURL(blob);
-        a.download = `TR_Report_${new Date().toLocaleDateString()}.csv`;
-        a.click();
-    }
+// Admin login functions (simplified for this fix)
+function showLogin() { document.getElementById('loginOverlay').style.display = 'flex'; }
+function closeLogin() { document.getElementById('loginOverlay').style.display = 'none'; }
+function attemptLogin() {
+    if(document.getElementById('adminPass').value === ADMIN_PASSWORD) {
+        isAdmin = true;
+        document.getElementById('adminBadge').style.display = 'block';
+        document.getElementById('logoutBtn').style.display = 'block';
+        document.getElementById('adminBtn').style.display = 'none';
+        closeLogin();
+    } else { alert("Wrong password"); }
+}
 </script>
 </body>
 </html>
