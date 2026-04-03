@@ -385,30 +385,35 @@
     document.getElementById('pCheque').innerText = data.method === 'Cheque' ? formattedAmount : '-';
 }
 
-    function executeReprint() {
+  async function executeReprint() {
     const searchId = document.getElementById('reprintSearchInput').value.trim().toUpperCase();
-    if (!searchId) return alert("Please enter a TR Number (e.g., COL-0001)");
+    if (!searchId) return alert("Enter TR Number");
 
-    // 1. Get all logs from local storage
-    const logs = JSON.parse(localStorage.getItem('tr_final_logs') || "[]");
-    
-    // 2. Find the specific record
-    const record = logs.find(l => l.id === searchId);
+    let logs = JSON.parse(localStorage.getItem('tr_final_logs') || "[]");
+    let record = logs.find(l => l.id === searchId);
+
+    // If NOT found locally, ask the Google Sheet (Cloud Search)
+    if (!record) {
+        document.getElementById('reprintSearchInput').value = "Searching Cloud...";
+        try {
+            const response = await fetch(GOOGLE_SCRIPT_URL, {
+                method: "POST",
+                body: JSON.stringify({ action: "FETCH_SINGLE", id: searchId })
+            });
+            const result = await response.json();
+            if (result.result === "success") {
+                record = result.data;
+            }
+        } catch (e) { console.log("Cloud search failed"); }
+    }
 
     if (record) {
-        // 3. Map the data to the hidden print receipt
         mapToPrint(record);
-        
-        // 4. Trigger the print window
-        setTimeout(() => {
-            window.print();
-            document.getElementById('reprintSearchInput').value = ""; // Clear search
-        }, 500);
+        setTimeout(() => { window.print(); }, 500);
     } else {
-        alert("Record not found in local history. Ensure the TR Number is correct.");
+        alert("Receipt not found anywhere.");
     }
 }
-
     function exportToExcel() {
         const logs = JSON.parse(localStorage.getItem('tr_final_logs') || "[]");
         let csv = "TR Code,Branch,Date,Name,Amount\n" + logs.map(l => `${l.id},${l.branch},${l.date},"${l.name}",${l.amount}`).join("\n");
