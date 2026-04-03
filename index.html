@@ -24,24 +24,21 @@
         input, select { width: 100%; padding: 12px; border: 1px solid #ced4da; border-radius: 6px; box-sizing: border-box; font-size: 1em; }
         input[readonly] { background-color: #e9ecef; cursor: not-allowed; font-weight: bold; }
 
-        /* Reprint Section */
-        .reprint-container { display: none; background: #fff3cd; border: 1px solid #ffeeba; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
-        .reprint-flex { display: flex; gap: 10px; }
+        #reprintArea { display: none; background: #fff3cd; border: 1px solid #ffeeba; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
 
         .button-group { margin-top: 30px; display: flex; gap: 15px; }
         button { flex: 1; padding: 15px; font-weight: bold; cursor: pointer; border: none; border-radius: 6px; text-transform: uppercase; transition: 0.2s; }
         .btn-print { background: var(--primary); color: white; }
         .btn-excel { background: var(--secondary); color: white; }
-        .btn-update { background: var(--admin); color: white; display: none; }
-        .btn-delete { background: var(--danger); color: white; display: none; }
+        .btn-update { background: var(--admin); color: white; }
+        .btn-delete { background: var(--danger); color: white; }
 
         /* Table */
         .log-container { margin-top: 40px; overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; }
         th, td { padding: 15px; text-align: left; border-bottom: 1px solid #eee; }
-        th { background: var(--primary); color: white; font-size: 0.9em; }
-        .admin-mode tr:hover { background-color: #f0f0ff; cursor: pointer; border-left: 5px solid var(--admin); }
-
+        th { background: var(--primary); color: white; }
+        
         /* Receipt Print Layout */
         #receipt-print { display: none; width: 100%; border: 2px solid #000; padding: 30px; color: #000; box-sizing: border-box; }
         .receipt-header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px; }
@@ -58,41 +55,41 @@
 </head>
 <body>
 
-<div id="loginOverlay" style="display:none;"> <div class="login-box">
+<div id="loginOverlay">
+    <div class="login-box">
         <h3>Admin Access Required</h3>
         <input type="password" id="adminPass" placeholder="Enter Password" style="margin-bottom: 15px;"><br>
-        
         <button class="btn-print" style="padding: 10px" onclick="attemptLogin()">Login</button>
-        <button style="background:#6c757d; color:white; padding: 10px; border:none; border-radius:6px;" onclick="closeLogin()">Cancel</button>
+        <button style="background:#6c757d; color:white; padding: 10px; border:none;" onclick="closeLogin()">Cancel</button>
     </div>
 </div>
 
 <div class="container">
     <div class="admin-controls">
         <span id="adminBadge">ADMIN MODE</span>
-        <button id="adminBtn" onclick="showLogin()" style="padding: 5px 10px; font-size: 0.7em; background: #333; color: white; border:none; border-radius:4px; cursor:pointer;">Admin Login</button>
-        <button id="logoutBtn" onclick="logout()" style="padding: 5px 10px; font-size: 0.7em; background: var(--danger); color: white; display: none; border:none; border-radius:4px; cursor:pointer;">Logout</button>
+        <button id="adminBtn" onclick="showLogin()" style="padding: 5px 10px; background: #333; color: white; border:none; cursor:pointer;">Admin Login</button>
+        <button id="logoutBtn" onclick="logout()" style="padding: 5px 10px; background: var(--danger); color: white; display: none; border:none; cursor:pointer;">Logout</button>
     </div>
 
-    <h2 style="text-align: center; color: var(--primary); margin-bottom: 30px;">TR Management System</h2>
+    <h2 style="text-align: center; color: var(--primary);">TR Management System</h2>
 
-    <div id="reprintArea" class="reprint-container">
-        <label>Reprint Search (By TR Number)</label>
-        <div class="reprint-flex">
-            <input type="text" id="reprintSearchInput" placeholder="Enter TR Number (e.g. COL-0001)">
-            <button onclick="executeReprint()" style="background: var(--admin); color: white; flex: 0 0 200px;">Find & Reprint</button>
+    <div id="reprintArea">
+        <label>Find & Reprint (By TR Number)</label>
+        <div style="display:flex; gap:10px;">
+            <input type="text" id="reprintSearchInput" placeholder="e.g. COL-0001">
+            <button onclick="executeReprint()" style="background: var(--admin); color: white; flex: 0 0 150px; padding:10px;">Reprint</button>
         </div>
     </div>
     
     <div class="header-section">
         <div>
             <label>Branch Name</label>
-            <input type="text" class="search-box" style="margin-bottom: 5px; font-size: 0.8em; padding: 5px;" placeholder="Filter..." oninput="filterBranches(this.value)">
-            <select id="branchSelect" onchange="generateTRNumber()"></select>
+            <input type="text" placeholder="Search Branch..." oninput="filterBranches(this.value)" style="margin-bottom:5px; padding:5px;">
+            <select id="branchSelect"></select>
         </div>
         <div>
-            <label>TR No (Auto)</label>
-            <input type="text" id="trNo" readonly>
+            <label>TR No</label>
+            <input type="text" id="trNo" readonly value="AUTO-GENERATE">
         </div>
         <div>
             <label>Date</label>
@@ -103,23 +100,23 @@
     <div class="form-grid">
         <div class="full">
             <label>Received with thanks from</label>
-            <input type="text" id="trFrom" placeholder="Enter Client Full Name">
+            <input type="text" id="trFrom" placeholder="Client Full Name">
         </div>
         <div>
             <label>Mobile Number</label>
-            <input type="text" id="trMobile" placeholder="e.g. 0771234567">
+            <input type="text" id="trMobile" placeholder="0771234567">
         </div>
         <div>
             <label>Amount (LKR)</label>
-            <input type="number" id="trAmount" oninput="updateAmountUI()" placeholder="Enter amount">
+            <input type="number" id="trAmount" oninput="updateAmountUI()" placeholder="0.00">
         </div>
         <div class="full">
             <label>Sum of Rupees</label>
-            <input type="text" id="trWords" readonly placeholder="Calculated automatically...">
+            <input type="text" id="trWords" readonly>
         </div>
         <div>
             <label>As (Purpose / Policy No)</label>
-            <input type="text" id="trAs" placeholder="Agreement or Policy Number">
+            <input type="text" id="trAs" placeholder="Agreement/Policy No">
         </div>
         <div>
             <label>Payment Method</label>
@@ -130,22 +127,21 @@
         </div>
     </div>
     
-   <div class="button-group">
-    <button id="saveBtn" class="btn-print" onclick="handleSaveAndPrint()">Save & Print</button>
-    <button id="updateBtn" class="btn-update" onclick="handleUpdate()" style="display:none;">Update & Save Changes</button>
-    <button id="deleteBtn" class="btn-delete" onclick="handleDelete()" style="display:none;">Delete Record</button>
-    <button class="btn-excel" onclick="exportToExcel()">Export CSV</button>
-</div>
+    <div class="button-group">
+        <button id="saveBtn" class="btn-print" onclick="handleSaveAndPrint()">Save & Print</button>
+        <button id="updateBtn" class="btn-update" onclick="handleUpdate()" style="display:none;">Update Changes</button>
+        <button id="deleteBtn" class="btn-delete" onclick="handleDelete()" style="display:none;">Delete</button>
+        <button class="btn-excel" onclick="exportToExcel()">Export CSV</button>
+    </div>
 
     <div class="log-container">
-        <h3>Recent Transactions <small id="adminHint" style="display:none; font-weight: normal; color: var(--admin); font-size: 0.7em;">(Click to Edit/Delete)</small></h3>
+        <h3>Recent Transactions <small id="adminHint" style="display:none; color:var(--admin)">(Click to Edit)</small></h3>
         <table id="logTable">
             <thead>
                 <tr>
                     <th>TR Code</th>
                     <th>Branch</th>
                     <th>Name</th>
-                    <th>Mobile</th>
                     <th>Amount</th>
                     <th>Date</th>
                 </tr>
@@ -162,152 +158,177 @@
         <h3 style="margin-top: 10px; text-decoration: underline;">TEMPORARY RECEIPT</h3>
     </div>
     <div style="display: flex; justify-content: space-between; font-weight: bold;">
-        <span>No: <span id="pNo" style="color: #d32f2f;"></span></span>
+        <span>No: <span id="pNo"></span></span>
         <span>Date: <span id="pDate"></span></span>
     </div>
     <div class="print-row">Received from: <span class="print-val" id="pFrom"></span></div>
     <div class="print-row">Mobile Number: <span class="print-val" id="pMobile"></span></div>
     <div class="print-row">Sum of Rupees: <span class="print-val" id="pWords"></span></div>
     <div class="print-row">On account of: <span class="print-val" id="pAs"></span></div>
-    
     <div style="display: flex; justify-content: space-between; margin-top: 30px;">
         <div style="border: 1px solid #000; width: 220px; padding: 10px;">
             <div>CASH: <span id="pCash" style="float:right"></span></div>
             <div style="border-bottom: 1px solid #000; padding-bottom: 5px;">CHEQUE: <span id="pCheque" style="float:right"></span></div>
             <div style="padding-top: 5px; font-weight: bold;">TOTAL: <span id="pTotal" style="float:right"></span></div>
         </div>
-        
-        <div style="text-align: center; border-top: 1px solid #000; width: 180px; margin-top: 60px;">
-            <small>Customer's Signature</small>
-        </div>
-
-        <div style="text-align: center; border-top: 1px solid #000; width: 180px; margin-top: 60px;">
-            <small>Authorized Signatory</small>
-        </div>
+        <div style="text-align: center; border-top: 1px solid #000; width: 180px; margin-top: 60px;"><small>Customer Signature</small></div>
+        <div style="text-align: center; border-top: 1px solid #000; width: 180px; margin-top: 60px;"><small>Authorized Signatory</small></div>
     </div>
 </div>
 
 <script>
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwKbY73QCZqIBFmgTz_OmGTKOnf3k2tFMuANEmoPPiuCWGujLzDgJYF1SLSFl1TrSik/exec"; 
     const ADMIN_PASSWORD = "admin123"; 
-
-    let isAdmin = false;
-
-    // Branches Array
     const branches = ["Head Office", "Ambalangoda", "Akuressa", "Ampara", "Anuradhapura", "Avissawella", "Ambalantota", "Balangoda", "Batticaloa", "Bandarawela", "Bentota", "Chilaw", "Chunnakkam", "Eheliyagoda", "Elakanda", "Elpitiya", "Embilipitiya", "Galle", "Gampaha", "Gampola", "Giriulla", "Godagama", "Hatton", "Hanwella", "Horana", "Horana Town", "Ja-ela", "Jaffna", "Kaduruwela", "Karapitiya", "Katugastota", "Kesbewa", "Kaduwela", "Kekirawa", "Kotahena", "Kalutara", "Kilinochchi", "Kurunegala", "Kuliyapitiya", "Kottawa", "Kandy", "Kegalle", "Kohuwala", "Kochchikade", "Matugama", "Malabe", "Maharagama", "Mahara", "Manipay", "Mattakkuliya", "Matale", "Mawathagama", "Moratuwa", "Maradana", "Matara", "Minuwangoda", "Negombo", "Nelliyadi", "Neluwa", "Nawalapitiya", "Nittambuwa", "Nikaweratiya", "Nuwaraeliya", "Norochchole", "Panadura", "Polonnaruwa", "Premier Center", "Pussellawa", "Puthukkudiyiriuppu", "Puttlam", "Pelawatte", "Ragala", "Rathnapura", "Thalawakele", "Thambuththegama", "Thissamaharama", "Trincomalee", "Veyangoda", "Vauniya", "Wellawatte", "Welimada", "Wennappuwa", "Warakapola", "Wattala", "Kalawanchikudy", "Kiribathgoda", "Kurunegala City", "Colombo City", "Weligama", "Negombo City", "Tangalle", "Dambulla"];
 
-    window.addEventListener('DOMContentLoaded', () => {
+    let isAdmin = false;
+    let editingId = null;
+
+    window.onload = () => {
         populateDropdown(branches);
         document.getElementById('trDate').valueAsDate = new Date();
         renderTable();
-    });
+    };
 
     function populateDropdown(list) {
         const sel = document.getElementById('branchSelect');
-        if (!sel) return;
         sel.innerHTML = "";
-        list.sort().forEach(b => {
-            let opt = document.createElement('option');
-            opt.value = b;
-            opt.text = b;
-            sel.appendChild(opt);
-        });
+        list.sort().forEach(b => sel.add(new Option(b, b)));
     }
 
-    function filterBranches(searchText) {
-        const filtered = branches.filter(b => b.toLowerCase().includes(searchText.toLowerCase()));
+    function filterBranches(val) {
+        const filtered = branches.filter(b => b.toLowerCase().includes(val.toLowerCase()));
         populateDropdown(filtered);
     }
 
-    // --- ADMIN LOGIC ---
-    function showLogin() {
-        document.getElementById('loginOverlay').style.display = 'flex';
-    }
-
-    function closeLogin() {
-        document.getElementById('loginOverlay').style.display = 'none';
-        document.getElementById('adminPass').value = ""; // Clear password on close
-    }
-
+    // --- ADMIN ---
+    function showLogin() { document.getElementById('loginOverlay').style.display = 'flex'; }
+    function closeLogin() { document.getElementById('loginOverlay').style.display = 'none'; }
+    
     function attemptLogin() {
-        const passInput = document.getElementById('adminPass');
-        const enteredPass = passInput.value;
-
-        if (enteredPass === ADMIN_PASSWORD) {
+        if(document.getElementById('adminPass').value === ADMIN_PASSWORD) {
             isAdmin = true;
-            
-            // 1. Update UI Elements
-            document.getElementById('adminBadge').style.display = 'inline-block';
-            document.getElementById('logoutBtn').style.display = 'inline-block';
+            document.getElementById('adminBadge').style.display = 'inline';
+            document.getElementById('logoutBtn').style.display = 'inline';
             document.getElementById('reprintArea').style.display = 'block';
-            
-            // 2. Hide Login Button
             document.getElementById('adminBtn').style.display = 'none';
-            
-            // 3. Enable Table Hover Effects
-            document.getElementById('logTable').classList.add('admin-mode');
-            
-            // 4. Success Actions
-            alert("Success: Admin Mode Enabled");
+            document.getElementById('adminHint').style.display = 'inline';
             closeLogin();
-        } else {
-            alert("Error: Incorrect Password");
-            passInput.value = "";
-        }
+            renderTable();
+        } else { alert("Wrong Password"); }
     }
 
-    function logout() {
-        if(confirm("Logout from Admin Mode?")) {
-            location.reload();
-        }
-    }
+    function logout() { location.reload(); }
 
-    // --- SAVE LOGIC ---
+    // --- CORE ---
     async function handleSaveAndPrint() {
         const saveBtn = document.getElementById('saveBtn');
-        const amount = document.getElementById('trAmount').value;
         const name = document.getElementById('trFrom').value;
-        
-        if(!name || !amount) return alert("Fill Name and Amount.");
+        const amount = document.getElementById('trAmount').value;
+        if(!name || !amount) return alert("Fill Name and Amount");
 
         saveBtn.disabled = true;
         saveBtn.innerText = "Syncing...";
 
-        const payload = {
+        const data = {
             branch: document.getElementById('branchSelect').value,
             date: document.getElementById('trDate').value,
-            name: name,
-            mobile: document.getElementById('trMobile').value,
-            amount: amount,
-            words: document.getElementById('trWords').value,
+            name, mobile: document.getElementById('trMobile').value,
+            amount, words: document.getElementById('trWords').value,
             as: document.getElementById('trAs').value,
-            method: document.getElementById('payMethod').value
+            method: document.getElementById('payMethod').value,
+            action: "SAVE"
         };
 
         try {
-            const response = await fetch(GOOGLE_SCRIPT_URL, {
-                method: "POST",
-                body: JSON.stringify(payload)
-            });
-            const result = await response.json();
-
-            if (result.result === "success") {
-                payload.id = result.generatedId; 
-                let logs = JSON.parse(localStorage.getItem('tr_final_logs') || "[]");
-                logs.push(payload);
-                localStorage.setItem('tr_final_logs', JSON.stringify(logs));
-                mapToPrint(payload);
+            const resp = await fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify(data)});
+            const res = await resp.json();
+            if(res.result === "success") {
+                data.id = res.generatedId;
+                saveLocal(data);
+                mapToPrint(data);
                 window.print();
                 resetUI();
-            } else {
-                alert("Server Error: " + result.error);
             }
-        } catch (e) {
-            alert("Connection Error. Check internet.");
-        } finally {
-            saveBtn.disabled = false;
-            saveBtn.innerText = "Save & Print";
+        } catch(e) { alert("Server Error"); }
+        finally { saveBtn.disabled = false; saveBtn.innerText = "Save & Print"; }
+    }
+
+    function loadForEdit(id) {
+        if(!isAdmin) return;
+        const logs = JSON.parse(localStorage.getItem('tr_final_logs') || "[]");
+        const entry = logs.find(l => l.id === id);
+        if(entry) {
+            editingId = id;
+            document.getElementById('trNo').value = entry.id;
+            document.getElementById('branchSelect').value = entry.branch;
+            document.getElementById('trFrom').value = entry.name;
+            document.getElementById('trMobile').value = entry.mobile;
+            document.getElementById('trAmount').value = entry.amount;
+            document.getElementById('trAs').value = entry.as;
+            document.getElementById('payMethod').value = entry.method;
+            document.getElementById('trDate').value = entry.date;
+            updateAmountUI();
+            
+            document.getElementById('saveBtn').style.display = 'none';
+            document.getElementById('updateBtn').style.display = 'block';
+            document.getElementById('deleteBtn').style.display = 'block';
+            window.scrollTo(0,0);
         }
+    }
+
+    async function handleUpdate() {
+        if(!confirm("Update this record?")) return;
+        const logs = JSON.parse(localStorage.getItem('tr_final_logs') || "[]");
+        const idx = logs.findIndex(l => l.id === editingId);
+        
+        const data = {
+            id: editingId,
+            branch: document.getElementById('branchSelect').value,
+            date: document.getElementById('trDate').value,
+            name: document.getElementById('trFrom').value,
+            mobile: document.getElementById('trMobile').value,
+            amount: document.getElementById('trAmount').value,
+            words: document.getElementById('trWords').value,
+            as: document.getElementById('trAs').value,
+            method: document.getElementById('payMethod').value,
+            action: "UPDATE"
+        };
+
+        logs[idx] = data;
+        localStorage.setItem('tr_final_logs', JSON.stringify(logs));
+        fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify(data)});
+        alert("Updated!");
+        resetUI();
+    }
+
+    async function handleDelete() {
+        if(!confirm("Delete this TR?")) return;
+        let logs = JSON.parse(localStorage.getItem('tr_final_logs') || "[]");
+        logs = logs.filter(l => l.id !== editingId);
+        localStorage.setItem('tr_final_logs', JSON.stringify(logs));
+        fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify({id: editingId, action: "CANCEL"})});
+        resetUI();
+    }
+
+    function saveLocal(data) {
+        let logs = JSON.parse(localStorage.getItem('tr_final_logs') || "[]");
+        logs.push(data);
+        localStorage.setItem('tr_final_logs', JSON.stringify(logs));
+    }
+
+    function renderTable() {
+        const logs = JSON.parse(localStorage.getItem('tr_final_logs') || "[]");
+        const tbody = document.querySelector('#logTable tbody');
+        tbody.innerHTML = logs.slice(-15).reverse().map(l => `
+            <tr onclick="loadForEdit('${l.id}')" style="cursor:${isAdmin?'pointer':'default'}">
+                <td><b>${l.id}</b></td>
+                <td>${l.branch}</td>
+                <td>${l.name}</td>
+                <td>${Number(l.amount).toLocaleString()}</td>
+                <td>${l.date}</td>
+            </tr>
+        `).join('');
     }
 
     function updateAmountUI() {
@@ -334,6 +355,16 @@
         return str.trim() + " Rupees Only";
     }
 
+    function resetUI() {
+        ['trFrom', 'trMobile', 'trAmount', 'trAs', 'trWords'].forEach(id => document.getElementById(id).value = '');
+        document.getElementById('trNo').value = "AUTO-GENERATE";
+        document.getElementById('saveBtn').style.display = 'block';
+        document.getElementById('updateBtn').style.display = 'none';
+        document.getElementById('deleteBtn').style.display = 'none';
+        editingId = null;
+        renderTable();
+    }
+
     function mapToPrint(data) {
         document.getElementById('pNo').innerText = data.id;
         document.getElementById('pDate').innerText = data.date;
@@ -346,147 +377,15 @@
         document.getElementById('pCheque').innerText = data.method === 'Cheque' ? data.amount : '-';
     }
 
-   function renderTable() {
-    const logs = JSON.parse(localStorage.getItem('tr_final_logs') || "[]");
-    const tbody = document.querySelector('#logTable tbody');
-    if(!tbody) return;
-    
-    tbody.innerHTML = logs.slice(-15).reverse().map(l => `
-        <tr onclick="loadForEdit('${l.id}')" style="cursor: ${isAdmin ? 'pointer' : 'default'}">
-            <td><b>${l.id || '...'}</b></td>
-            <td>${l.branch}</td>
-            <td>${l.name}</td>
-            <td>${l.mobile || '-'}</td>
-            <td>${Number(l.amount).toLocaleString()}</td>
-            <td>${l.date}</td>
-        </tr>
-    `).join('');
-}
-
-    function resetUI() {
-    ['trFrom', 'trMobile', 'trAmount', 'trAs', 'trWords'].forEach(id => {
-        const el = document.getElementById(id);
-        if(el) el.value = '';
-    });
-    
-    // Reset Buttons
-    document.getElementById('saveBtn').style.display = 'block';
-    document.getElementById('updateBtn').style.display = 'none';
-    document.getElementById('deleteBtn').style.display = 'none';
-    window.editingId = null;
-    
-    renderTable();
-}
-    // --- ADMIN EDIT LOGIC ---
-
-// This function runs when you click a row in the table
-function loadForEdit(id) {
-    if(!isAdmin) return; // Only work if logged in
-    
-    const logs = JSON.parse(localStorage.getItem('tr_final_logs') || "[]");
-    const entry = logs.find(l => l.id === id);
-    
-    if(entry) {
-        // 1. Fill the form with the existing data
-        document.getElementById('trFrom').value = entry.name;
-        document.getElementById('trMobile').value = entry.mobile || "";
-        document.getElementById('trAmount').value = entry.amount;
-        document.getElementById('trAs').value = entry.as;
-        document.getElementById('payMethod').value = entry.method;
-        document.getElementById('trDate').value = entry.date;
-        document.getElementById('branchSelect').value = entry.branch;
-        
-        // Use a hidden field or a temporary property to store the ID we are editing
-        window.editingId = entry.id; 
-        
-        updateAmountUI(); // Refresh the words
-        
-        // 2. Swap the buttons
-        document.getElementById('saveBtn').style.display = 'none';
-        document.getElementById('updateBtn').style.display = 'block';
-        document.getElementById('deleteBtn').style.display = 'block';
-        
-        // 3. Scroll to top so the user sees the form
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-}
-
-async function handleUpdate() {
-    if(!confirm("Are you sure you want to update this record?")) return;
-    
-    const id = window.editingId;
-    let logs = JSON.parse(localStorage.getItem('tr_final_logs') || "[]");
-    const idx = logs.findIndex(l => l.id === id);
-    
-    if(idx > -1) {
-        const updatedData = {
-            id: id,
-            branch: document.getElementById('branchSelect').value,
-            date: document.getElementById('trDate').value,
-            name: document.getElementById('trFrom').value,
-            mobile: document.getElementById('trMobile').value,
-            amount: document.getElementById('trAmount').value,
-            words: document.getElementById('trWords').value,
-            as: document.getElementById('trAs').value,
-            method: document.getElementById('payMethod').value,
-            action: "UPDATE" // Tells Google Script to update existing row
-        };
-
-        // Update Local
-        logs[idx] = updatedData;
-        localStorage.setItem('tr_final_logs', JSON.stringify(logs));
-        
-        // Update Server
-        try {
-            await fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify(updatedData)});
-            alert("Entry Updated Successfully!");
-        } catch(e) {
-            alert("Local update saved, but server sync failed.");
-        }
-        
-        resetUI();
-    }
-}
-
-async function handleDelete() {
-    if(!confirm("PERMANENTLY DELETE this TR? This cannot be undone.")) return;
-    
-    const id = window.editingId;
-    let logs = JSON.parse(localStorage.getItem('tr_final_logs') || "[]");
-    
-    // Remove from Local
-    logs = logs.filter(l => l.id !== id);
-    localStorage.setItem('tr_final_logs', JSON.stringify(logs));
-    
-    // Sync with Server (Tell it to cancel/delete)
-    try {
-        await fetch(GOOGLE_SCRIPT_URL, { 
-            method: "POST", 
-            body: JSON.stringify({ id: id, action: "CANCEL" })
-        });
-        alert("Record Deleted.");
-    } catch(e) {
-        alert("Deleted locally, server sync failed.");
-    }
-    
-    resetUI();
-}
     function exportToExcel() {
-    const logs = JSON.parse(localStorage.getItem('tr_final_logs') || "[]");
-    if(logs.length === 0) return alert("No data to export");
-
-    let csv = "TR Code,Branch,Date,Name,Mobile,Amount,Purpose,Method\n";
-    logs.forEach(l => {
-        csv += `${l.id},${l.branch},${l.date},"${l.name}","${l.mobile}",${l.amount},"${l.as}",${l.method}\n`;
-    });
-
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.setAttribute('href', url);
-    a.setAttribute('download', `TR_Report_${new Date().toLocaleDateString()}.csv`);
-    a.click();
-}
+        const logs = JSON.parse(localStorage.getItem('tr_final_logs') || "[]");
+        let csv = "TR Code,Branch,Date,Name,Amount\n" + logs.map(l => `${l.id},${l.branch},${l.date},"${l.name}",${l.amount}`).join("\n");
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const a = document.createElement('a');
+        a.href = window.URL.createObjectURL(blob);
+        a.download = `Report.csv`;
+        a.click();
+    }
 </script>
 </body>
 </html>
