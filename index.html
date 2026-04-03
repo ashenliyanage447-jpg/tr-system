@@ -188,165 +188,168 @@
 </div>
 
 <script>
-   // 1. YOUR SETTINGS
-const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwKbY73QCZqIBFmgTz_OmGTKOnf3k2tFMuANEmoPPiuCWGujLzDgJYF1SLSFl1TrSik/exec"; 
-const ADMIN_PASSWORD = "admin123"; // Suggest moving this to Google Script later
+    // 1. CONFIGURATION
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwKbY73QCZqIBFmgTz_OmGTKOnf3k2tFMuANEmoPPiuCWGujLzDgJYF1SLSFl1TrSik/exec"; 
+    const ADMIN_PASSWORD = "admin123";
 
-// 2. DATA
-const branches = ["Head Office", "Ambalangoda", "Akuressa", "Ampara", "Anuradhapura", "Avissawella", "Ambalantota", "Balangoda", "Batticaloa", "Bandarawela", "Bentota", "Chilaw", "Chunnakkam", "Eheliyagoda", "Elakanda", "Elpitiya", "Embilipitiya", "Galle", "Gampaha", "Gampola", "Giriulla", "Godagama", "Hatton", "Hanwella", "Horana", "Horana Town", "Ja-ela", "Jaffna", "Kaduruwela", "Karapitiya", "Katugastota", "Kesbewa", "Kaduwela", "Kekirawa", "Kotahena", "Kalutara", "Kilinochchi", "Kurunegala", "Kuliyapitiya", "Kottawa", "Kandy", "Kegalle", "Kohuwala", "Kochchikade", "Matugama", "Malabe", "Maharagama", "Mahara", "Manipay", "Mattakkuliya", "Matale", "Mawathagama", "Moratuwa", "Maradana", "Matara", "Minuwangoda", "Negombo", "Nelliyadi", "Neluwa", "Nawalapitiya", "Nittambuwa", "Nikaweratiya", "Nuwaraeliya", "Norochchole", "Panadura", "Polonnaruwa", "Premier Center", "Pussellawa", "Puthukkudiyiriuppu", "Puttlam", "Pelawatte", "Ragala", "Rathnapura", "Thalawakele", "Thambuththegama", "Thissamaharama", "Trincomalee", "Veyangoda", "Vauniya", "Wellawatte", "Welimada", "Wennappuwa", "Warakapola", "Wattala", "Kalawanchikudy", "Kiribathgoda", "Kurunegala City", "Colombo City", "Weligama", "Negombo City", "Tangalle", "Dambulla"];
+    const branches = ["Head Office", "Ambalangoda", "Akuressa", "Ampara", "Anuradhapura", "Avissawella", "Ambalantota", "Balangoda", "Batticaloa", "Bandarawela", "Bentota", "Chilaw", "Chunnakkam", "Eheliyagoda", "Elakanda", "Elpitiya", "Embilipitiya", "Galle", "Gampaha", "Gampola", "Giriulla", "Godagama", "Hatton", "Hanwella", "Horana", "Horana Town", "Ja-ela", "Jaffna", "Kaduruwela", "Karapitiya", "Katugastota", "Kesbewa", "Kaduwela", "Kekirawa", "Kotahena", "Kalutara", "Kilinochchi", "Kurunegala", "Kuliyapitiya", "Kottawa", "Kandy", "Kegalle", "Kohuwala", "Kochchikade", "Matugama", "Malabe", "Maharagama", "Mahara", "Manipay", "Mattakkuliya", "Matale", "Mawathagama", "Moratuwa", "Maradana", "Matara", "Minuwangoda", "Negombo", "Nelliyadi", "Neluwa", "Nawalapitiya", "Nittambuwa", "Nikaweratiya", "Nuwaraeliya", "Norochchole", "Panadura", "Polonnaruwa", "Premier Center", "Pussellawa", "Puthukkudiyiriuppu", "Puttlam", "Pelawatte", "Ragala", "Rathnapura", "Thalawakele", "Thambuththegama", "Thissamaharama", "Trincomalee", "Veyangoda", "Vauniya", "Wellawatte", "Welimada", "Wennappuwa", "Warakapola", "Wattala", "Kalawanchikudy", "Kiribathgoda", "Kurunegala City", "Colombo City", "Weligama", "Negombo City", "Tangalle", "Dambulla"];
 
-let isAdmin = false;
+    // 2. RUN ON STARTUP
+    window.addEventListener('DOMContentLoaded', (event) => {
+        console.log("DOM fully loaded and parsed");
+        populateDropdown(branches);
+        document.getElementById('trDate').valueAsDate = new Date();
+        renderTable();
+    });
 
-// 3. INITIALIZATION
-window.onload = () => {
-    // Populate dropdown immediately
-    const sel = document.getElementById('branchSelect');
-    branches.sort().forEach(b => sel.add(new Option(b, b)));
-    
-    document.getElementById('trDate').valueAsDate = new Date();
-    renderTable();
-};
-
-// 4. BRANCH FILTER LOGIC
-function filterBranches(searchText) {
-    const sel = document.getElementById('branchSelect');
-    sel.innerHTML = "";
-    const filtered = branches
-        .filter(b => b.toLowerCase().includes(searchText.toLowerCase()))
-        .sort();
-    
-    filtered.forEach(b => sel.add(new Option(b, b)));
-}
-
-// 5. CORE OPERATIONS (SERVER SYNC)
-async function handleSaveAndPrint() {
-    const saveBtn = document.getElementById('saveBtn');
-    const amount = document.getElementById('trAmount').value;
-    const name = document.getElementById('trFrom').value;
-    
-    if(!name || !amount) return alert("Please enter Client Name and Amount.");
-
-    // Visual Feedback
-    saveBtn.disabled = true;
-    saveBtn.innerText = "Requesting TR Number...";
-    saveBtn.style.opacity = "0.5";
-
-    const payload = {
-        branch: document.getElementById('branchSelect').value,
-        date: document.getElementById('trDate').value,
-        name: name,
-        mobile: document.getElementById('trMobile').value,
-        amount: amount,
-        words: document.getElementById('trWords').value,
-        as: document.getElementById('trAs').value,
-        method: document.getElementById('payMethod').value,
-        action: "SAVE"
-    };
-
-    try {
-        // Send to Google Script and Wait for the LOCK and ID generation
-        const response = await fetch(GOOGLE_SCRIPT_URL, {
-            method: "POST",
-            body: JSON.stringify(payload)
+    // 3. DROPDOWN LOGIC
+    function populateDropdown(list) {
+        const sel = document.getElementById('branchSelect');
+        if (!sel) return;
+        sel.innerHTML = "";
+        list.sort().forEach(b => {
+            let opt = document.createElement('option');
+            opt.value = b;
+            opt.innerHTML = b;
+            sel.appendChild(opt);
         });
-        
-        const result = await response.json();
-
-        if (result.result === "success") {
-            // Apply the ID returned by the server
-            payload.id = result.generatedId; 
-            
-            // Save to local history
-            let logs = JSON.parse(localStorage.getItem('tr_final_logs') || "[]");
-            logs.push(payload);
-            localStorage.setItem('tr_final_logs', JSON.stringify(logs));
-
-            // Print & Reset
-            mapToPrint(payload);
-            window.print();
-            resetUI();
-        } else {
-            alert("Server Error: " + result.error);
-        }
-    } catch (e) {
-        console.error(e);
-        alert("Network Error: Could not connect to the server. Check your internet.");
-    } finally {
-        saveBtn.disabled = false;
-        saveBtn.innerText = "Save & Print";
-        saveBtn.style.opacity = "1";
     }
-}
 
-// 6. UTILITY FUNCTIONS
-function updateAmountUI() {
-    const val = document.getElementById('trAmount').value;
-    document.getElementById('trWords').value = val ? numToWords(parseInt(val)) : "";
-}
+    function filterBranches(searchText) {
+        const filtered = branches.filter(b => 
+            b.toLowerCase().includes(searchText.toLowerCase())
+        );
+        populateDropdown(filtered);
+    }
 
-function numToWords(n) {
-    if (n === 0) return "Zero Rupees Only";
-    const a = ['', 'One ', 'Two ', 'Three ', 'Four ', 'Five ', 'Six ', 'Seven ', 'Eight ', 'Nine ', 'Ten ', 'Eleven ', 'Twelve ', 'Thirteen ', 'Fourteen ', 'Fifteen ', 'Sixteen ', 'Seventeen ', 'Eighteen ', 'Nineteen '];
-    const b = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
-    const format = (num, suffix) => {
-        if (num === 0) return '';
-        if (num > 19) return b[Math.floor(num / 10)] + ' ' + a[num % 10] + suffix;
-        return a[num] + suffix;
-    };
-    let str = '';
-    str += format(Math.floor(n / 10000000), 'Crore ');
-    str += format(Math.floor((n / 100000) % 100), 'Lakh ');
-    str += format(Math.floor((n / 1000) % 100), 'Thousand ');
-    str += format(Math.floor((n / 100) % 10), 'Hundred ');
-    if (n > 100 && n % 100 !== 0) str += 'and ';
-    str += format(n % 100, '');
-    return str.trim() + " Rupees Only";
-}
+    // 4. SAVE LOGIC (SERVER SYNC)
+    async function handleSaveAndPrint() {
+        const saveBtn = document.getElementById('saveBtn');
+        const amount = document.getElementById('trAmount').value;
+        const name = document.getElementById('trFrom').value;
+        
+        if(!name || !amount) {
+            alert("Please enter Name and Amount.");
+            return;
+        }
 
-function mapToPrint(data) {
-    document.getElementById('pNo').innerText = data.id;
-    document.getElementById('pDate').innerText = data.date;
-    document.getElementById('pFrom').innerText = data.name;
-    document.getElementById('pMobile').innerText = data.mobile || '-';
-    document.getElementById('pWords').innerText = data.words;
-    document.getElementById('pAs').innerText = data.as;
-    document.getElementById('pTotal').innerText = Number(data.amount).toLocaleString('en-LK', {minimumFractionDigits: 2});
-    document.getElementById('pCash').innerText = data.method === 'Cash' ? data.amount : '-';
-    document.getElementById('pCheque').innerText = data.method === 'Cheque' ? data.amount : '-';
-}
+        saveBtn.disabled = true;
+        saveBtn.innerText = "Syncing...";
 
-function resetUI() {
-    ['trFrom', 'trMobile', 'trAmount', 'trAs', 'trWords'].forEach(id => document.getElementById(id).value = '');
-    renderTable();
-}
+        const payload = {
+            branch: document.getElementById('branchSelect').value,
+            date: document.getElementById('trDate').value,
+            name: name,
+            mobile: document.getElementById('trMobile').value,
+            amount: amount,
+            words: document.getElementById('trWords').value,
+            as: document.getElementById('trAs').value,
+            method: document.getElementById('payMethod').value
+        };
 
-function renderTable() {
-    const logs = JSON.parse(localStorage.getItem('tr_final_logs') || "[]");
-    const tbody = document.querySelector('#logTable tbody');
-    tbody.innerHTML = logs.slice(-15).reverse().map(l => `
-        <tr>
-            <td><b>${l.id}</b></td>
-            <td>${l.branch}</td>
-            <td>${l.name}</td>
-            <td>${l.mobile || '-'}</td>
-            <td>${Number(l.amount).toLocaleString()}</td>
-            <td>${l.date}</td>
-        </tr>
-    `).join('');
-}
+        try {
+            const response = await fetch(GOOGLE_SCRIPT_URL, {
+                method: "POST",
+                body: JSON.stringify(payload)
+            });
+            
+            // Note: If Google Script doesn't return JSON, this line will fail
+            const result = await response.json();
 
-// Admin login functions (simplified for this fix)
-function showLogin() { document.getElementById('loginOverlay').style.display = 'flex'; }
-function closeLogin() { document.getElementById('loginOverlay').style.display = 'none'; }
-function attemptLogin() {
-    if(document.getElementById('adminPass').value === ADMIN_PASSWORD) {
-        isAdmin = true;
-        document.getElementById('adminBadge').style.display = 'block';
-        document.getElementById('logoutBtn').style.display = 'block';
-        document.getElementById('adminBtn').style.display = 'none';
-        closeLogin();
-    } else { alert("Wrong password"); }
-}
+            if (result.result === "success") {
+                payload.id = result.generatedId; 
+                saveLocal(payload);
+                mapToPrint(payload);
+                window.print();
+                resetUI();
+            } else {
+                alert("Server Error: " + result.error);
+            }
+        } catch (e) {
+            console.error("Fetch Error:", e);
+            alert("Submission Failed. Check Console for details.");
+        } finally {
+            saveBtn.disabled = false;
+            saveBtn.innerText = "Save & Print";
+        }
+    }
+
+    // 5. HELPER FUNCTIONS
+    function updateAmountUI() {
+        const val = document.getElementById('trAmount').value;
+        document.getElementById('trWords').value = val ? numToWords(parseInt(val)) : "";
+    }
+
+    function numToWords(n) {
+        if (n === 0) return "Zero Rupees Only";
+        const a = ['', 'One ', 'Two ', 'Three ', 'Four ', 'Five ', 'Six ', 'Seven ', 'Eight ', 'Nine ', 'Ten ', 'Eleven ', 'Twelve ', 'Thirteen ', 'Fourteen ', 'Fifteen ', 'Sixteen ', 'Seventeen ', 'Eighteen ', 'Nineteen '];
+        const b = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+        const format = (num, suffix) => {
+            if (num === 0) return '';
+            if (num > 19) return b[Math.floor(num / 10)] + ' ' + a[num % 10] + suffix;
+            return a[num] + suffix;
+        };
+        let str = '';
+        str += format(Math.floor(n / 10000000), 'Crore ');
+        str += format(Math.floor((n / 100000) % 100), 'Lakh ');
+        str += format(Math.floor((n / 1000) % 100), 'Thousand ');
+        str += format(Math.floor((n / 100) % 10), 'Hundred ');
+        if (n > 100 && n % 100 !== 0) str += 'and ';
+        str += format(n % 100, '');
+        return str.trim() + " Rupees Only";
+    }
+
+    function saveLocal(data) {
+        let logs = JSON.parse(localStorage.getItem('tr_final_logs') || "[]");
+        logs.push(data);
+        localStorage.setItem('tr_final_logs', JSON.stringify(logs));
+    }
+
+    function mapToPrint(data) {
+        document.getElementById('pNo').innerText = data.id;
+        document.getElementById('pDate').innerText = data.date;
+        document.getElementById('pFrom').innerText = data.name;
+        document.getElementById('pMobile').innerText = data.mobile || '-';
+        document.getElementById('pWords').innerText = data.words;
+        document.getElementById('pAs').innerText = data.as;
+        document.getElementById('pTotal').innerText = Number(data.amount).toLocaleString('en-LK', {minimumFractionDigits: 2});
+        document.getElementById('pCash').innerText = data.method === 'Cash' ? data.amount : '-';
+        document.getElementById('pCheque').innerText = data.method === 'Cheque' ? data.amount : '-';
+    }
+
+    function resetUI() {
+        ['trFrom', 'trMobile', 'trAmount', 'trAs', 'trWords'].forEach(id => {
+            const el = document.getElementById(id);
+            if(el) el.value = '';
+        });
+        renderTable();
+    }
+
+    function renderTable() {
+        const logs = JSON.parse(localStorage.getItem('tr_final_logs') || "[]");
+        const tbody = document.querySelector('#logTable tbody');
+        if(!tbody) return;
+        tbody.innerHTML = logs.slice(-10).reverse().map(l => `
+            <tr>
+                <td><b>${l.id || 'N/A'}</b></td>
+                <td>${l.branch}</td>
+                <td>${l.name}</td>
+                <td>${l.mobile || '-'}</td>
+                <td>${Number(l.amount).toLocaleString()}</td>
+                <td>${l.date}</td>
+            </tr>
+        `).join('');
+    }
+
+    // Login logic
+    function showLogin() { document.getElementById('loginOverlay').style.display = 'flex'; }
+    function closeLogin() { document.getElementById('loginOverlay').style.display = 'none'; }
+    function attemptLogin() {
+        if(document.getElementById('adminPass').value === ADMIN_PASSWORD) {
+            alert("Admin Mode Active");
+            closeLogin();
+        } else { alert("Wrong password"); }
+    }
 </script>
 </body>
 </html>
