@@ -1,436 +1,428 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Professional TR System | Mercantile Investments</title>
-    <style>
-        :root { --primary: #004085; --secondary: #28a745; --danger: #dc3545; --admin: #6f42c1; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; margin: 20px; background: #f0f2f5; color: #333; }
-        .container { max-width: 1000px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); position: relative; }
-        
-        /* Admin UI */
-        .admin-controls { position: absolute; top: 10px; right: 10px; display: flex; gap: 10px; align-items: center; }
-        #adminBadge { display: none; background: var(--admin); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.75em; font-weight: bold; }
-        #loginOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center; }
-        .login-box { background: white; padding: 25px; border-radius: 8px; text-align: center; }
-        
-        /* Layout */
-        .header-section { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 20px; background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 25px; border: 1px solid #dee2e6; }
-        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .full { grid-column: span 2; }
-        
-        label { font-weight: 600; font-size: 0.9em; margin-bottom: 8px; display: block; color: var(--primary); }
-        input, select { width: 100%; padding: 12px; border: 1px solid #ced4da; border-radius: 6px; box-sizing: border-box; font-size: 1em; }
-        input[readonly] { background-color: #e9ecef; cursor: not-allowed; font-weight: bold; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Professional TR System | Mercantile Investments</title>
+    <style>
+        :root { --primary: #004085; --secondary: #28a745; --danger: #dc3545; --admin: #6f42c1; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; margin: 20px; background: #f0f2f5; color: #333; }
+        .container { max-width: 1000px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); position: relative; }
+        
+        /* Admin UI */
+        .admin-controls { position: absolute; top: 10px; right: 10px; display: flex; gap: 10px; align-items: center; }
+        #adminBadge { display: none; background: var(--admin); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.75em; font-weight: bold; }
+        #loginOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center; }
+        .login-box { background: white; padding: 25px; border-radius: 8px; text-align: center; }
+        
+        /* Layout */
+        .header-section { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 20px; background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 25px; border: 1px solid #dee2e6; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .full { grid-column: span 2; }
+        
+        label { font-weight: 600; font-size: 0.9em; margin-bottom: 8px; display: block; color: var(--primary); }
+        input, select { width: 100%; padding: 12px; border: 1px solid #ced4da; border-radius: 6px; box-sizing: border-box; font-size: 1em; }
+        input[readonly] { background-color: #e9ecef; cursor: not-allowed; font-weight: bold; }
 
-        #reprintArea { display: none; background: #fff3cd; border: 1px solid #ffeeba; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+        #reprintArea { display: none; background: #fff3cd; border: 1px solid #ffeeba; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
 
-        .button-group { margin-top: 30px; display: flex; gap: 15px; }
-        button { flex: 1; padding: 15px; font-weight: bold; cursor: pointer; border: none; border-radius: 6px; text-transform: uppercase; transition: 0.2s; }
-        .btn-print { background: var(--primary); color: white; }
-        .btn-excel { background: var(--secondary); color: white; }
-        .btn-update { background: var(--admin); color: white; }
-        .btn-delete { background: var(--danger); color: white; }
+        .button-group { margin-top: 30px; display: flex; gap: 15px; }
+        button { flex: 1; padding: 15px; font-weight: bold; cursor: pointer; border: none; border-radius: 6px; text-transform: uppercase; transition: 0.2s; }
+        .btn-print { background: var(--primary); color: white; }
+        .btn-excel { background: var(--secondary); color: white; }
+        .btn-update { background: var(--admin); color: white; }
+        .btn-delete { background: var(--danger); color: white; }
 
-        /* Table */
-        .log-container { margin-top: 40px; overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; }
-        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #eee; }
-        th { background: var(--primary); color: white; }
-        
-        /* Receipt Print Layout */
-        #receipt-print { display: none; width: 100%; border: 2px solid #000; padding: 30px; color: #000; box-sizing: border-box; }
-        .receipt-header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px; }
-        .print-row { margin: 15px 0; border-bottom: 1px dotted #000; display: flex; font-size: 1.1em; }
-        .print-val { flex-grow: 1; font-weight: bold; padding-left: 10px; }
+        /* Table */
+        .log-container { margin-top: 40px; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; }
+        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: var(--primary); color: white; }
+        
+        /* Receipt Print Layout */
+        #receipt-print { display: none; width: 100%; border: 2px solid #000; padding: 30px; color: #000; box-sizing: border-box; }
+        .receipt-header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px; }
+        .print-row { margin: 15px 0; border-bottom: 1px dotted #000; display: flex; font-size: 1.1em; }
+        .print-val { flex-grow: 1; font-weight: bold; padding-left: 10px; }
 
-        @media print {
-            body * { visibility: hidden; }
-            #receipt-print, #receipt-print * { visibility: visible; }
-            #receipt-print { display: block; position: absolute; left: 0; top: 0; border: none; width: 100%; }
-            .container { display: none; }
-        }
-    </style>
+        @media print {
+            body * { visibility: hidden; }
+            #receipt-print, #receipt-print * { visibility: visible; }
+            #receipt-print { display: block; position: absolute; left: 0; top: 0; border: none; width: 100%; }
+            .container { display: none; }
+        }
+    </style>
 </head>
 <body>
 
 <div id="loginOverlay">
-    <div class="login-box">
-        <h3>Admin Access Required</h3>
-        <input type="password" id="adminPass" placeholder="Enter Password" style="margin-bottom: 15px;"><br>
-        <button class="btn-print" style="padding: 10px" onclick="attemptLogin()">Login</button>
-        <button style="background:#6c757d; color:white; padding: 10px; border:none;" onclick="closeLogin()">Cancel</button>
-    </div>
+    <div class="login-box">
+        <h3>Admin Access Required</h3>
+        <input type="password" id="adminPass" placeholder="Enter Password" style="margin-bottom: 15px;"><br>
+        <button class="btn-print" style="padding: 10px" onclick="attemptLogin()">Login</button>
+        <button style="background:#6c757d; color:white; padding: 10px; border:none;" onclick="closeLogin()">Cancel</button>
+    </div>
 </div>
 
-<div class="admin-controls">
-    <span id="adminBadge" style="display:none;">ADMIN MODE</span>
-    
-    <button id="adminBtn" onclick="showLogin()" style="padding: 5px 10px; background: #333; color: white; border:none; cursor:pointer;">Admin Login</button>
-    
-   <button id="logoutBtn" onclick="logout()" style="display: none; background: #dc3545; color: white; padding: 5px 10px; border:none; cursor:pointer;">Logout</button>
-</div>
-    <h2 style="text-align: center; color: var(--primary);">TR Management System</h2>
+<div class="container">
+    <div class="admin-controls">
+        <span id="adminBadge">ADMIN MODE</span>
+        <button id="adminBtn" onclick="showLogin()" style="padding: 5px 10px; background: #333; color: white; border:none; cursor:pointer;">Admin Login</button>
+        <button id="logoutBtn" onclick="logout()" style="padding: 5px 10px; background: var(--danger); color: white; display: none; border:none; cursor:pointer;">Logout</button>
+    </div>
 
-    <div id="reprintArea">
-        <label>Find & Reprint (By TR Number)</label>
-        <div style="display:flex; gap:10px;">
-            <input type="text" id="reprintSearchInput" placeholder="e.g. COL-0001">
-            <button onclick="executeReprint()" style="background: var(--admin); color: white; flex: 0 0 150px; padding:10px;">Reprint</button>
-        </div>
-    </div>
-    
-    <div class="header-section">
-       <div>
-    <label>Branch Name</label>
-    <input type="text" placeholder="Search Branch..." oninput="filterBranches(this.value)" style="margin-bottom:5px; padding:5px;">
-    <select id="branchSelect"></select>
-</div>
-        <div>
-            <label>TR No</label>
-            <input type="text" id="trNo" readonly value="AUTO-GENERATE">
-        </div>
-        <div>
-            <label>Date</label>
-            <input type="date" id="trDate">
-        </div>
-    </div>
+    <h2 style="text-align: center; color: var(--primary);">TR Management System</h2>
 
-    <div class="form-grid">
-        <div class="full">
-            <label>Received with thanks from</label>
-            <input type="text" id="trFrom" placeholder="Client Full Name">
-        </div>
-        <div>
-            <label>Mobile Number</label>
-            <input type="text" id="trMobile" placeholder="0771234567">
-        </div>
-        <div>
-            <label>Amount (LKR)</label>
-            <input type="number" id="trAmount" oninput="updateAmountUI()" placeholder="0.00">
-        </div>
-        <div class="full">
-            <label>Sum of Rupees</label>
-            <input type="text" id="trWords" readonly>
-        </div>
-        <div>
-            <label>As (Purpose / Policy No)</label>
-            <input type="text" id="trAs" placeholder="Agreement/Policy No">
-        </div>
-        <div>
-            <label>Payment Method</label>
-            <select id="payMethod">
-                <option value="Cash">Cash</option>
-                <option value="Cheque">Cheque</option>
-            </select>
-        </div>
-    </div>
-    
-    <div class="button-group">
-        <button id="saveBtn" class="btn-print" onclick="handleSaveAndPrint()">Save & Print</button>
-        <button id="updateBtn" class="btn-update" onclick="handleUpdate()" style="display:none;">Update Changes</button>
-        <button id="deleteBtn" class="btn-delete" onclick="handleDelete()" style="display:none;">Delete</button>
-        <button class="btn-excel" onclick="exportToExcel()">Export CSV</button>
-    </div>
+    <div id="reprintArea">
+        <label>Find & Reprint (By TR Number)</label>
+        <div style="display:flex; gap:10px;">
+            <input type="text" id="reprintSearchInput" placeholder="e.g. COL-0001">
+            <button onclick="executeReprint()" style="background: var(--admin); color: white; flex: 0 0 150px; padding:10px;">Reprint</button>
+        </div>
+    </div>
+    
+    <div class="header-section">
+        <div>
+            <label>Branch Name</label>
+            <input type="text" placeholder="Search Branch..." oninput="filterBranches(this.value)" style="margin-bottom:5px; padding:5px;">
+            <select id="branchSelect"></select>
+        </div>
+        <div>
+            <label>TR No</label>
+            <input type="text" id="trNo" readonly value="AUTO-GENERATE">
+        </div>
+        <div>
+            <label>Date</label>
+            <input type="date" id="trDate">
+        </div>
+    </div>
 
-    <div class="log-container">
-        <h3>Recent Transactions <small id="adminHint" style="display:none; color:var(--admin)">(Click to Edit)</small></h3>
-        <table id="logTable">
-            <thead>
-                <tr>
-                    <th>TR Code</th>
-                    <th>Branch</th>
-                    <th>Name</th>
-                    <th>Amount</th>
-                    <th>Date</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-    </div>
+    <div class="form-grid">
+        <div class="full">
+            <label>Received with thanks from</label>
+            <input type="text" id="trFrom" placeholder="Client Full Name">
+        </div>
+        <div>
+            <label>Mobile Number</label>
+            <input type="text" id="trMobile" placeholder="0771234567">
+        </div>
+        <div>
+            <label>Amount (LKR)</label>
+            <input type="number" id="trAmount" oninput="updateAmountUI()" placeholder="0.00">
+        </div>
+        <div class="full">
+            <label>Sum of Rupees</label>
+            <input type="text" id="trWords" readonly>
+        </div>
+        <div>
+            <label>As (Purpose / Policy No)</label>
+            <input type="text" id="trAs" placeholder="Agreement/Policy No">
+        </div>
+        <div>
+            <label>Payment Method</label>
+            <select id="payMethod">
+                <option value="Cash">Cash</option>
+                <option value="Cheque">Cheque</option>
+            </select>
+        </div>
+    </div>
+    
+    <div class="button-group">
+        <button id="saveBtn" class="btn-print" onclick="handleSaveAndPrint()">Save & Print</button>
+        <button id="updateBtn" class="btn-update" onclick="handleUpdate()" style="display:none;">Update Changes</button>
+        <button id="deleteBtn" class="btn-delete" onclick="handleDelete()" style="display:none;">Delete</button>
+        <button class="btn-excel" onclick="exportToExcel()">Export CSV</button>
+    </div>
+
+    <div class="log-container">
+        <h3>Recent Transactions <small id="adminHint" style="display:none; color:var(--admin)">(Click to Edit)</small></h3>
+        <table id="logTable">
+            <thead>
+                <tr>
+                    <th>TR Code</th>
+                    <th>Branch</th>
+                    <th>Name</th>
+                    <th>Amount</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
 </div>
 
 <div id="receipt-print">
-    <div class="receipt-header">
-        <div style="font-size: 1.4em; font-weight: bold;">MERCANTILE INVESTMENTS AND FINANCE PLC</div>
-        <small>Reg. No. PB 76 PQ | No.236, Galle Road, Colombo 03</small>
-        <h3 style="margin-top: 10px; text-decoration: underline;">TEMPORARY RECEIPT</h3>
-    </div>
-    <div style="display: flex; justify-content: space-between; font-weight: bold;">
-        <span>No: <span id="pNo"></span></span>
-        <span>Date: <span id="pDate"></span></span>
-    </div>
-    <div class="print-row">Received from: <span class="print-val" id="pFrom"></span></div>
-    <div class="print-row">Mobile Number: <span class="print-val" id="pMobile"></span></div>
-    <div class="print-row">Sum of Rupees: <span class="print-val" id="pWords"></span></div>
-    <div class="print-row">On account of: <span class="print-val" id="pAs"></span></div>
-    <div style="display: flex; justify-content: space-between; margin-top: 30px;">
-        <div style="border: 1px solid #000; width: 220px; padding: 10px;">
-            <div>CASH: <span id="pCash" style="float:right"></span></div>
-            <div style="border-bottom: 1px solid #000; padding-bottom: 5px;">CHEQUE: <span id="pCheque" style="float:right"></span></div>
-            <div style="padding-top: 5px; font-weight: bold;">TOTAL: <span id="pTotal" style="float:right"></span></div>
-        </div>
-        <div style="text-align: center; border-top: 1px solid #000; width: 180px; margin-top: 60px;"><small>Customer Signature</small></div>
-        <div style="text-align: center; border-top: 1px solid #000; width: 180px; margin-top: 60px;"><small>Authorized Signatory</small></div>
-    </div>
+    <div class="receipt-header">
+        <div style="font-size: 1.4em; font-weight: bold;">MERCANTILE INVESTMENTS AND FINANCE PLC</div>
+        <small>Reg. No. PB 76 PQ | No.236, Galle Road, Colombo 03</small>
+        <h3 style="margin-top: 10px; text-decoration: underline;">TEMPORARY RECEIPT</h3>
+    </div>
+    <div style="display: flex; justify-content: space-between; font-weight: bold;">
+        <span>No: <span id="pNo"></span></span>
+        <span>Date: <span id="pDate"></span></span>
+    </div>
+    <div class="print-row">Received from: <span class="print-val" id="pFrom"></span></div>
+    <div class="print-row">Mobile Number: <span class="print-val" id="pMobile"></span></div>
+    <div class="print-row">Sum of Rupees: <span class="print-val" id="pWords"></span></div>
+    <div class="print-row">On account of: <span class="print-val" id="pAs"></span></div>
+    <div style="display: flex; justify-content: space-between; margin-top: 30px;">
+        <div style="border: 1px solid #000; width: 220px; padding: 10px;">
+            <div>CASH: <span id="pCash" style="float:right"></span></div>
+            <div style="border-bottom: 1px solid #000; padding-bottom: 5px;">CHEQUE: <span id="pCheque" style="float:right"></span></div>
+            <div style="padding-top: 5px; font-weight: bold;">TOTAL: <span id="pTotal" style="float:right"></span></div>
+        </div>
+        <div style="text-align: center; border-top: 1px solid #000; width: 180px; margin-top: 60px;"><small>Customer Signature</small></div>
+        <div style="text-align: center; border-top: 1px solid #000; width: 180px; margin-top: 60px;"><small>Authorized Signatory</small></div>
+    </div>
 </div>
 
 <script>
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycb.../exec"; 
-    let isAdmin = false;
-    let editingId = null;
-    let currentSessionPass = ""; 
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwC-c9NGLNr9KEqB0af8O6qNrs4u8nxTOPjWqRgtAVZt1whmhMEjEYMaQZmbT1taag8/exec"; 
+    const ADMIN_PASSWORD = "admin123"; 
+    const branches = ["Head Office", "Ambalangoda", "Akuressa", "Ampara", "Anuradhapura", "Avissawella", "Ambalantota", "Balangoda", "Batticaloa", "Bandarawela", "Bentota", "Chilaw", "Chunnakkam", "Eheliyagoda", "Elakanda", "Elpitiya", "Embilipitiya", "Galle", "Gampaha", "Gampola", "Giriulla", "Godagama", "Hatton", "Hanwella", "Horana", "Horana Town", "Ja-ela", "Jaffna", "Kaduruwela", "Karapitiya", "Katugastota", "Kesbewa", "Kaduwela", "Kekirawa", "Kotahena", "Kalutara", "Kilinochchi", "Kurunegala", "Kuliyapitiya", "Kottawa", "Kandy", "Kegalle", "Kohuwala", "Kochchikade", "Matugama", "Malabe", "Maharagama", "Mahara", "Manipay", "Mattakkuliya", "Matale", "Mawathagama", "Moratuwa", "Maradana", "Matara", "Minuwangoda", "Negombo", "Nelliyadi", "Neluwa", "Nawalapitiya", "Nittambuwa", "Nikaweratiya", "Nuwaraeliya", "Norochchole", "Panadura", "Polonnaruwa", "Premier Center", "Pussellawa", "Puthukkudiyiriuppu", "Puttlam", "Pelawatte", "Ragala", "Rathnapura", "Thalawakele", "Thambuththegama", "Thissamaharama", "Trincomalee", "Veyangoda", "Vauniya", "Wellawatte", "Welimada", "Wennappuwa", "Warakapola", "Wattala", "Kalawanchikudy", "Kiribathgoda", "Kurunegala City", "Colombo City", "Weligama", "Negombo City", "Tangalle", "Dambulla"];
 
-    // ENSURE THIS ARRAY IS NOT EMPTY OR BROKEN
-    const branches = ["Head Office", "Ambalangoda", "Akuressa", "Ampara", "Anuradhapura", "Avissawella", "Ambalantota", "Balangoda", "Batticaloa", "Bandarawela", "Bentota", "Chilaw", "Chunnakkam", "Eheliyagoda", "Elakanda", "Elpitiya", "Embilipitiya", "Galle", "Gampaha", "Gampola", "Giriulla", "Godagama", "Hatton", "Hanwella", "Horana", "Horana Town", "Ja-ela", "Jaffna", "Kaduruwela", "Karapitiya", "Katugastota", "Kesbewa", "Kaduwela", "Kekirawa", "Kotahena", "Kalutara", "Kilinochchi", "Kurunegala", "Kuliyapitiya", "Kottawa", "Kandy", "Kegalle", "Kohuwala", "Kochchikade", "Matugama", "Malabe", "Maharagama", "Mahara", "Manipay", "Mattakkuliya", "Matale", "Mawathagama", "Moratuwa", "Maradana", "Matara", "Minuwangoda", "Negombo", "Nelliyadi", "Neluwa", "Nawalapitiya", "Nittambuwa", "Nikaweratiya", "Nuwaraeliya", "Norochchole", "Panadura", "Polonnaruwa", "Premier Center", "Pussellawa", "Puthukkudiyiriuppu", "Puttlam", "Pelawatte", "Ragala", "Rathnapura", "Thalawakele", "Thambuththegama", "Thissamaharama", "Trincomalee", "Veyangoda", "Vauniya", "Wellawatte", "Welimada", "Wennappuwa", "Warakapola", "Wattala", "Kalawanchikudy", "Kiribathgoda", "Kurunegala City", "Colombo City", "Weligama", "Negombo City", "Tangalle", "Dambulla"];
+    let isAdmin = false;
+    let editingId = null;
 
-    // This runs as soon as the page opens
-    window.onload = () => {
-        console.log("Page loaded. Initializing dropdown...");
-        populateDropdown(branches);
-        document.getElementById('trDate').valueAsDate = new Date();
-        if (typeof renderTable === "function") renderTable();
-    };
+    window.onload = () => {
+        populateDropdown(branches);
+        document.getElementById('trDate').valueAsDate = new Date();
+        renderTable();
+    };
 
-    function populateDropdown(list) {
-        const sel = document.getElementById('branchSelect');
-        if (!sel) return console.error("Error: branchSelect element not found!");
-        sel.innerHTML = "";
-        list.sort().forEach(b => {
-            let opt = document.createElement('option');
-            opt.value = b;
-            opt.innerHTML = b;
-            sel.appendChild(opt);
-        });
-    }
+    function populateDropdown(list) {
+        const sel = document.getElementById('branchSelect');
+        sel.innerHTML = "";
+        list.sort().forEach(b => sel.add(new Option(b, b)));
+    }
 
-    function filterBranches(val) {
-        const filtered = branches.filter(b => b.toLowerCase().includes(val.toLowerCase()));
-        populateDropdown(filtered);
-    }
+    function filterBranches(val) {
+        const filtered = branches.filter(b => b.toLowerCase().includes(val.toLowerCase()));
+        populateDropdown(filtered);
+    }
 
-    // --- ADMIN ---
-    function showLogin() { 
-    document.getElementById('loginOverlay').style.display = 'flex'; 
+    // --- ADMIN ---
+    function showLogin() { document.getElementById('loginOverlay').style.display = 'flex'; }
+    function closeLogin() { document.getElementById('loginOverlay').style.display = 'none'; }
+    
+    function attemptLogin() {
+        if(document.getElementById('adminPass').value === ADMIN_PASSWORD) {
+            isAdmin = true;
+            document.getElementById('adminBadge').style.display = 'inline';
+            document.getElementById('logoutBtn').style.display = 'inline';
+            document.getElementById('reprintArea').style.display = 'block';
+            document.getElementById('adminBtn').style.display = 'none';
+            document.getElementById('adminHint').style.display = 'inline';
+            closeLogin();
+            renderTable();
+        } else { alert("Wrong Password"); }
+    }
+
+    function logout() { location.reload(); }
+
+    // --- CORE ---
+    async function handleSaveAndPrint() {
+        const saveBtn = document.getElementById('saveBtn');
+        const name = document.getElementById('trFrom').value;
+        const amount = document.getElementById('trAmount').value;
+        if(!name || !amount) return alert("Fill Name and Amount");
+
+        saveBtn.disabled = true;
+        saveBtn.innerText = "Syncing...";
+
+        const data = {
+            branch: document.getElementById('branchSelect').value,
+            date: document.getElementById('trDate').value,
+            name, mobile: document.getElementById('trMobile').value,
+            amount, words: document.getElementById('trWords').value,
+            as: document.getElementById('trAs').value,
+            method: document.getElementById('payMethod').value,
+            action: "SAVE"
+        };
+
+        try {
+            const resp = await fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify(data)});
+            const res = await resp.json();
+            if(res.result === "success") {
+                data.id = res.generatedId;
+                saveLocal(data);
+                mapToPrint(data);
+                window.print();
+                resetUI();
+            }
+        } catch(e) { alert("Server Error"); }
+        finally { saveBtn.disabled = false; saveBtn.innerText = "Save & Print"; }
+    }
+
+    function loadForEdit(id) {
+        if(!isAdmin) return;
+        const logs = JSON.parse(localStorage.getItem('tr_final_logs') || "[]");
+        const entry = logs.find(l => l.id === id);
+        if(entry) {
+            editingId = id;
+            document.getElementById('trNo').value = entry.id;
+            document.getElementById('branchSelect').value = entry.branch;
+            document.getElementById('trFrom').value = entry.name;
+            document.getElementById('trMobile').value = entry.mobile;
+            document.getElementById('trAmount').value = entry.amount;
+            document.getElementById('trAs').value = entry.as;
+            document.getElementById('payMethod').value = entry.method;
+            document.getElementById('trDate').value = entry.date;
+            updateAmountUI();
+            
+            document.getElementById('saveBtn').style.display = 'none';
+            document.getElementById('updateBtn').style.display = 'block';
+            document.getElementById('deleteBtn').style.display = 'block';
+            window.scrollTo(0,0);
+        }
+    }
+
+    async function handleUpdate() {
+        if(!confirm("Update this record?")) return;
+        const logs = JSON.parse(localStorage.getItem('tr_final_logs') || "[]");
+        const idx = logs.findIndex(l => l.id === editingId);
+        
+        const data = {
+            id: editingId,
+            branch: document.getElementById('branchSelect').value,
+            date: document.getElementById('trDate').value,
+            name: document.getElementById('trFrom').value,
+            mobile: document.getElementById('trMobile').value,
+            amount: document.getElementById('trAmount').value,
+            words: document.getElementById('trWords').value,
+            as: document.getElementById('trAs').value,
+            method: document.getElementById('payMethod').value,
+            action: "UPDATE"
+        };
+
+        logs[idx] = data;
+        localStorage.setItem('tr_final_logs', JSON.stringify(logs));
+        fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify(data)});
+        alert("Updated!");
+        resetUI();
+    }
+
+    async function handleDelete() {
+        if(!confirm("Delete this TR?")) return;
+        let logs = JSON.parse(localStorage.getItem('tr_final_logs') || "[]");
+        logs = logs.filter(l => l.id !== editingId);
+        localStorage.setItem('tr_final_logs', JSON.stringify(logs));
+        fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify({id: editingId, action: "CANCEL"})});
+        resetUI();
+    }
+
+    function saveLocal(data) {
+        let logs = JSON.parse(localStorage.getItem('tr_final_logs') || "[]");
+        logs.push(data);
+        localStorage.setItem('tr_final_logs', JSON.stringify(logs));
+    }
+
+    function renderTable() {
+        const logs = JSON.parse(localStorage.getItem('tr_final_logs') || "[]");
+        const tbody = document.querySelector('#logTable tbody');
+        tbody.innerHTML = logs.slice(-15).reverse().map(l => `
+            <tr onclick="loadForEdit('${l.id}')" style="cursor:${isAdmin?'pointer':'default'}">
+                <td><b>${l.id}</b></td>
+                <td>${l.branch}</td>
+                <td>${l.name}</td>
+                <td>${Number(l.amount).toLocaleString()}</td>
+                <td>${l.date}</td>
+            </tr>
+        `).join('');
+    }
+
+    function updateAmountUI() {
+        const val = document.getElementById('trAmount').value;
+        document.getElementById('trWords').value = val ? numToWords(parseInt(val)) : "";
+    }
+
+    function numToWords(n) {
+        if (n === 0) return "Zero Rupees Only";
+        const a = ['', 'One ', 'Two ', 'Three ', 'Four ', 'Five ', 'Six ', 'Seven ', 'Eight ', 'Nine ', 'Ten ', 'Eleven ', 'Twelve ', 'Thirteen ', 'Fourteen ', 'Fifteen ', 'Sixteen ', 'Seventeen ', 'Eighteen ', 'Nineteen '];
+        const b = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+        const format = (num, suffix) => {
+            if (num === 0) return '';
+            if (num > 19) return b[Math.floor(num / 10)] + ' ' + a[num % 10] + suffix;
+            return a[num] + suffix;
+        };
+        let str = '';
+        str += format(Math.floor(n / 10000000), 'Crore ');
+        str += format(Math.floor((n / 100000) % 100), 'Lakh ');
+        str += format(Math.floor((n / 1000) % 100), 'Thousand ');
+        str += format(Math.floor((n / 100) % 10), 'Hundred ');
+        if (n > 100 && n % 100 !== 0) str += 'and ';
+        str += format(n % 100, '');
+        return str.trim() + " Rupees Only";
+    }
+
+    function resetUI() {
+        ['trFrom', 'trMobile', 'trAmount', 'trAs', 'trWords'].forEach(id => document.getElementById(id).value = '');
+        document.getElementById('trNo').value = "AUTO-GENERATE";
+        document.getElementById('saveBtn').style.display = 'block';
+        document.getElementById('updateBtn').style.display = 'none';
+        document.getElementById('deleteBtn').style.display = 'none';
+        editingId = null;
+        renderTable();
+    }
+
+    function mapToPrint(data) {
+    // Fill the hidden receipt fields
+    document.getElementById('pNo').innerText = data.id || "N/A";
+    document.getElementById('pDate').innerText = data.date || "";
+    document.getElementById('pFrom').innerText = data.name || "";
+    document.getElementById('pMobile').innerText = data.mobile || '-';
+    document.getElementById('pWords').innerText = data.words || "";
+    document.getElementById('pAs').innerText = data.as || "";
+    
+    // Format the currency
+    const formattedAmount = Number(data.amount).toLocaleString('en-LK', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+    
+    document.getElementById('pTotal').innerText = formattedAmount;
+    document.getElementById('pCash').innerText = data.method === 'Cash' ? formattedAmount : '-';
+    document.getElementById('pCheque').innerText = data.method === 'Cheque' ? formattedAmount : '-';
 }
 
-function closeLogin() { 
-    document.getElementById('loginOverlay').style.display = 'none'; 
+  async function executeReprint() {
+    const searchId = document.getElementById('reprintSearchInput').value.trim().toUpperCase();
+    if (!searchId) return alert("Enter TR Number");
+
+    let logs = JSON.parse(localStorage.getItem('tr_final_logs') || "[]");
+    let record = logs.find(l => l.id === searchId);
+
+    // If NOT found locally, ask the Google Sheet (Cloud Search)
+    if (!record) {
+        document.getElementById('reprintSearchInput').value = "Searching Cloud...";
+        try {
+            const response = await fetch(GOOGLE_SCRIPT_URL, {
+                method: "POST",
+                body: JSON.stringify({ action: "FETCH_SINGLE", id: searchId })
+            });
+            const result = await response.json();
+            if (result.result === "success") {
+                record = result.data;
+            }
+        } catch (e) { console.log("Cloud search failed"); }
+    }
+
+    if (record) {
+        mapToPrint(record);
+        setTimeout(() => { window.print(); }, 500);
+    } else {
+        alert("Receipt not found anywhere.");
+    }
 }
-    
-  async function attemptLogin() {
-    const enteredPass = document.getElementById('adminPass').value;
-    
-    // We verify the password by sending a request to Google Script
-    try {
-        const resp = await fetch(GOOGLE_SCRIPT_URL, { 
-            method: "POST", 
-            body: JSON.stringify({ action: "FETCH_SINGLE", id: "VERIFY", pass: enteredPass }) 
-        });
-        const res = await resp.json();
-
-        if (res.result !== "error") { 
-            // LOGIN SUCCESSFUL
-            isAdmin = true;
-            currentSessionPass = enteredPass; 
-            
-            // UI CHANGES:
-            document.getElementById('adminBadge').style.display = 'inline';
-            document.getElementById('logoutBtn').style.display = 'inline'; // Show Logout
-            document.getElementById('adminBtn').style.display = 'none';    // Hide Login
-            document.getElementById('reprintArea').style.display = 'block';
-            document.getElementById('adminHint').style.display = 'inline';
-            
-            closeLogin();
-            renderTable();
-        } else {
-            alert("Invalid Admin Password");
-        }
-    } catch (e) {
-        alert("Server Error: Could not verify password.");
-    }
-}
-  function logout() {
-    // 1. Clear the security variables in the browser memory
-    currentSessionPass = "";
-    isAdmin = false;
-    editingId = null;
-
-    // 2. Clear any form data that was being edited
-    if (typeof resetUI === "function") {
-        resetUI();
-    }
-
-    // 3. FORCE the browser to stay on THIS EXACT PAGE but refresh it
-    // This prevents it from jumping to a different "site" or "root" folder
-    const currentURL = window.location.href.split('?')[0]; // Gets the URL without parameters
-    window.location.replace(currentURL); 
-}
-    function loadForEdit(id) {
-        if(!isAdmin) return;
-        const logs = JSON.parse(localStorage.getItem('tr_final_logs') || "[]");
-        const entry = logs.find(l => l.id === id);
-        if(entry) {
-            editingId = id;
-            document.getElementById('trNo').value = entry.id;
-            document.getElementById('branchSelect').value = entry.branch;
-            document.getElementById('trFrom').value = entry.name;
-            document.getElementById('trMobile').value = entry.mobile;
-            document.getElementById('trAmount').value = entry.amount;
-            document.getElementById('trAs').value = entry.as;
-            document.getElementById('payMethod').value = entry.method;
-            document.getElementById('trDate').value = entry.date;
-            updateAmountUI();
-            
-            document.getElementById('saveBtn').style.display = 'none';
-            document.getElementById('updateBtn').style.display = 'block';
-            document.getElementById('deleteBtn').style.display = 'block';
-            window.scrollTo(0,0);
-        }
-    }
-
-   async function handleUpdate() {
-    if(!confirm("Update this record?")) return;
-    const logs = JSON.parse(localStorage.getItem('tr_final_logs') || "[]");
-    const idx = logs.findIndex(l => l.id === editingId);
-    
-    const data = {
-        id: editingId,
-        pass: currentSessionPass, // Send password to authorize update
-        branch: document.getElementById('branchSelect').value,
-        date: document.getElementById('trDate').value,
-        name: document.getElementById('trFrom').value,
-        mobile: document.getElementById('trMobile').value,
-        amount: document.getElementById('trAmount').value,
-        words: document.getElementById('trWords').value,
-        as: document.getElementById('trAs').value,
-        method: document.getElementById('payMethod').value,
-        action: "UPDATE"
-    };
-
-    const resp = await fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify(data)});
-    const res = await resp.json();
-    
-    if(res.result === "success") {
-        logs[idx] = data;
-        localStorage.setItem('tr_final_logs', JSON.stringify(logs));
-        alert("Updated Successfully!");
-        resetUI();
-    } else {
-        alert("Update failed: Unauthorized");
-    }
-}
-    async function handleDelete() {
-        if(!confirm("Delete this TR?")) return;
-        let logs = JSON.parse(localStorage.getItem('tr_final_logs') || "[]");
-        logs = logs.filter(l => l.id !== editingId);
-        localStorage.setItem('tr_final_logs', JSON.stringify(logs));
-        fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify({id: editingId, action: "CANCEL"})});
-        resetUI();
-    }
-
-    function saveLocal(data) {
-        let logs = JSON.parse(localStorage.getItem('tr_final_logs') || "[]");
-        logs.push(data);
-        localStorage.setItem('tr_final_logs', JSON.stringify(logs));
-    }
-
-    function renderTable() {
-        const logs = JSON.parse(localStorage.getItem('tr_final_logs') || "[]");
-        const tbody = document.querySelector('#logTable tbody');
-        tbody.innerHTML = logs.slice(-15).reverse().map(l => `
-            <tr onclick="loadForEdit('${l.id}')" style="cursor:${isAdmin?'pointer':'default'}">
-                <td><b>${l.id}</b></td>
-                <td>${l.branch}</td>
-                <td>${l.name}</td>
-                <td>${Number(l.amount).toLocaleString()}</td>
-                <td>${l.date}</td>
-            </tr>
-        `).join('');
-    }
-
-    function updateAmountUI() {
-        const val = document.getElementById('trAmount').value;
-        document.getElementById('trWords').value = val ? numToWords(parseInt(val)) : "";
-    }
-
-    function numToWords(n) {
-        if (n === 0) return "Zero Rupees Only";
-        const a = ['', 'One ', 'Two ', 'Three ', 'Four ', 'Five ', 'Six ', 'Seven ', 'Eight ', 'Nine ', 'Ten ', 'Eleven ', 'Twelve ', 'Thirteen ', 'Fourteen ', 'Fifteen ', 'Sixteen ', 'Seventeen ', 'Eighteen ', 'Nineteen '];
-        const b = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
-        const format = (num, suffix) => {
-            if (num === 0) return '';
-            if (num > 19) return b[Math.floor(num / 10)] + ' ' + a[num % 10] + suffix;
-            return a[num] + suffix;
-        };
-        let str = '';
-        str += format(Math.floor(n / 10000000), 'Crore ');
-        str += format(Math.floor((n / 100000) % 100), 'Lakh ');
-        str += format(Math.floor((n / 1000) % 100), 'Thousand ');
-        str += format(Math.floor((n / 100) % 10), 'Hundred ');
-        if (n > 100 && n % 100 !== 0) str += 'and ';
-        str += format(n % 100, '');
-        return str.trim() + " Rupees Only";
-    }
-
-    function resetUI() {
-        ['trFrom', 'trMobile', 'trAmount', 'trAs', 'trWords'].forEach(id => document.getElementById(id).value = '');
-        document.getElementById('trNo').value = "AUTO-GENERATE";
-        document.getElementById('saveBtn').style.display = 'block';
-        document.getElementById('updateBtn').style.display = 'none';
-        document.getElementById('deleteBtn').style.display = 'none';
-        editingId = null;
-        renderTable();
-    }
-
-    function mapToPrint(data) {
-    // Fill the hidden receipt fields
-    document.getElementById('pNo').innerText = data.id || "N/A";
-    document.getElementById('pDate').innerText = data.date || "";
-    document.getElementById('pFrom').innerText = data.name || "";
-    document.getElementById('pMobile').innerText = data.mobile || '-';
-    document.getElementById('pWords').innerText = data.words || "";
-    document.getElementById('pAs').innerText = data.as || "";
-    
-    // Format the currency
-    const formattedAmount = Number(data.amount).toLocaleString('en-LK', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-    });
-    
-    document.getElementById('pTotal').innerText = formattedAmount;
-    document.getElementById('pCash').innerText = data.method === 'Cash' ? formattedAmount : '-';
-    document.getElementById('pCheque').innerText = data.method === 'Cheque' ? formattedAmount : '-';
-}
-
- async function executeReprint() {
-    const searchId = document.getElementById('reprintSearchInput').value.trim().toUpperCase();
-    if (!searchId) return alert("Enter TR Number");
-
-    // Pass the session password so the cloud search is authorized
-    const response = await fetch(GOOGLE_SCRIPT_URL, {
-        method: "POST",
-        body: JSON.stringify({ action: "FETCH_SINGLE", id: searchId, pass: currentSessionPass })
-    });
-    const result = await response.json();
-    
-    if (result.result === "success") {
-        mapToPrint(result.data);
-        setTimeout(() => { window.print(); }, 500);
-    } else {
-        alert("Receipt not found or Unauthorized.");
-    }
-}
-    function exportToExcel() {
-        const logs = JSON.parse(localStorage.getItem('tr_final_logs') || "[]");
-        let csv = "TR Code,Branch,Date,Name,Amount\n" + logs.map(l => `${l.id},${l.branch},${l.date},"${l.name}",${l.amount}`).join("\n");
-        const blob = new Blob([csv], { type: 'text/csv' });
-        const a = document.createElement('a');
-        a.href = window.URL.createObjectURL(blob);
-        a.download = `Report.csv`;
-        a.click();
-    }
+    function exportToExcel() {
+        const logs = JSON.parse(localStorage.getItem('tr_final_logs') || "[]");
+        let csv = "TR Code,Branch,Date,Name,Amount\n" + logs.map(l => `${l.id},${l.branch},${l.date},"${l.name}",${l.amount}`).join("\n");
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const a = document.createElement('a');
+        a.href = window.URL.createObjectURL(blob);
+        a.download = `Report.csv`;
+        a.click();
+    }
 </script>
 </body>
 </html>
