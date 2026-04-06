@@ -69,7 +69,7 @@
     
     <button id="adminBtn" onclick="showLogin()" style="padding: 5px 10px; background: #333; color: white; border:none; cursor:pointer;">Admin Login</button>
     
-    <button id="logoutBtn" onclick="logout()" style="padding: 5px 10px; background: #dc3545; color: white; display: none; border:none; cursor:pointer;">Logout</button>
+   <button id="logoutBtn" onclick="logout()" style="display: none; background: #dc3545; color: white; padding: 5px 10px; border:none; cursor:pointer;">Logout</button>
 </div>
     <h2 style="text-align: center; color: var(--primary);">TR Management System</h2>
 
@@ -243,33 +243,21 @@ function closeLogin() {
         alert("Server Error: Could not verify password.");
     }
 }
-   function logout() {
-    console.log("Logout initiated...");
-
-    // 1. Clear variables
+  function logout() {
+    // 1. Clear the security variables in the browser memory
     currentSessionPass = "";
     isAdmin = false;
     editingId = null;
 
-    // 2. Safely hide Admin elements (Check if they exist first)
-    const toHide = ['adminBadge', 'logoutBtn', 'reprintArea', 'adminHint', 'updateBtn', 'deleteBtn'];
-    toHide.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.style.display = 'none';
-    });
-
-    // 3. Safely show Login button
-    const loginBtn = document.getElementById('adminBtn');
-    if (loginBtn) loginBtn.style.display = 'inline';
-
-    // 4. Reset the form fields
+    // 2. Clear any form data that was being edited
     if (typeof resetUI === "function") {
         resetUI();
     }
 
-    // 5. Hard Redirect to clear the session and URL parameters
-    console.log("Redirecting to clean state...");
-    window.location.href = window.location.pathname; 
+    // 3. FORCE the browser to stay on THIS EXACT PAGE but refresh it
+    // This prevents it from jumping to a different "site" or "root" folder
+    const currentURL = window.location.href.split('?')[0]; // Gets the URL without parameters
+    window.location.replace(currentURL); 
 }
     function loadForEdit(id) {
         if(!isAdmin) return;
