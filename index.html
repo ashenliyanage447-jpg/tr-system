@@ -242,20 +242,29 @@ function closeLogin() {
         alert("Server Error: Could not verify password.");
     }
 }
-    function logout() {
-    // 1. Clear credentials
+   function logout() {
+    // 1. Wipe the security credentials immediately
     currentSessionPass = "";
     isAdmin = false;
+    editingId = null;
 
-    // 2. Reset UI Visibility
-    document.getElementById('adminBadge').style.display = 'none';
-    document.getElementById('logoutBtn').style.display = 'none';
-    document.getElementById('adminBtn').style.display = 'inline';
-    document.getElementById('reprintArea').style.display = 'none';
-    
-    // 3. Clear the form and refresh to be safe
+    // 2. Manually hide all Admin UI elements (don't wait for reload)
+    const adminElements = ['adminBadge', 'logoutBtn', 'reprintArea', 'adminHint', 'updateBtn', 'deleteBtn'];
+    adminElements.forEach(id => {
+        const el = document.getElementById(id);
+        if(el) el.style.display = 'none';
+    });
+
+    // 3. Show the Login button again
+    const loginBtn = document.getElementById('adminBtn');
+    if(loginBtn) loginBtn.style.display = 'inline';
+
+    // 4. Clear the form data
     resetUI();
-    window.location.reload(); 
+
+    // 5. FORCE a clean reload from the server (ignoring cache)
+    // Adding a timestamp ?t=... ensures the browser sees it as a "new" visit
+    window.location.href = window.location.pathname + "?t=" + Date.now();
 }
 
     function loadForEdit(id) {
