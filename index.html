@@ -82,11 +82,11 @@
     </div>
     
     <div class="header-section">
-        <div>
-            <label>Branch Name</label>
-            <input type="text" placeholder="Search Branch..." oninput="filterBranches(this.value)" style="margin-bottom:5px; padding:5px;">
-            <select id="branchSelect"></select>
-        </div>
+       <div>
+    <label>Branch Name</label>
+    <input type="text" placeholder="Search Branch..." oninput="filterBranches(this.value)" style="margin-bottom:5px; padding:5px;">
+    <select id="branchSelect"></select>
+</div>
         <div>
             <label>TR No</label>
             <input type="text" id="trNo" readonly value="AUTO-GENERATE">
@@ -177,24 +177,32 @@
 </div>
 
 <script>
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzT9Z3FkXfY_wgGEms1PZKAfstOsfMprwOXqFN8fQqJ07zGsOJBekKbYOpCR7LiF3iV/exec"; 
-    
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycb.../exec"; 
+    let isAdmin = false;
+    let editingId = null;
+    let currentSessionPass = ""; 
+
+    // ENSURE THIS ARRAY IS NOT EMPTY OR BROKEN
     const branches = ["Head Office", "Ambalangoda", "Akuressa", "Ampara", "Anuradhapura", "Avissawella", "Ambalantota", "Balangoda", "Batticaloa", "Bandarawela", "Bentota", "Chilaw", "Chunnakkam", "Eheliyagoda", "Elakanda", "Elpitiya", "Embilipitiya", "Galle", "Gampaha", "Gampola", "Giriulla", "Godagama", "Hatton", "Hanwella", "Horana", "Horana Town", "Ja-ela", "Jaffna", "Kaduruwela", "Karapitiya", "Katugastota", "Kesbewa", "Kaduwela", "Kekirawa", "Kotahena", "Kalutara", "Kilinochchi", "Kurunegala", "Kuliyapitiya", "Kottawa", "Kandy", "Kegalle", "Kohuwala", "Kochchikade", "Matugama", "Malabe", "Maharagama", "Mahara", "Manipay", "Mattakkuliya", "Matale", "Mawathagama", "Moratuwa", "Maradana", "Matara", "Minuwangoda", "Negombo", "Nelliyadi", "Neluwa", "Nawalapitiya", "Nittambuwa", "Nikaweratiya", "Nuwaraeliya", "Norochchole", "Panadura", "Polonnaruwa", "Premier Center", "Pussellawa", "Puthukkudiyiriuppu", "Puttlam", "Pelawatte", "Ragala", "Rathnapura", "Thalawakele", "Thambuththegama", "Thissamaharama", "Trincomalee", "Veyangoda", "Vauniya", "Wellawatte", "Welimada", "Wennappuwa", "Warakapola", "Wattala", "Kalawanchikudy", "Kiribathgoda", "Kurunegala City", "Colombo City", "Weligama", "Negombo City", "Tangalle", "Dambulla"];
 
-    let isAdmin = false;
-    let currentSessionPass = "";
-    let editingId = null;
-    let currentSessionPass = ""; // Stores password for the current session only
+    // This runs as soon as the page opens
     window.onload = () => {
+        console.log("Page loaded. Initializing dropdown...");
         populateDropdown(branches);
         document.getElementById('trDate').valueAsDate = new Date();
-        renderTable();
+        if (typeof renderTable === "function") renderTable();
     };
 
     function populateDropdown(list) {
         const sel = document.getElementById('branchSelect');
+        if (!sel) return console.error("Error: branchSelect element not found!");
         sel.innerHTML = "";
-        list.sort().forEach(b => sel.add(new Option(b, b)));
+        list.sort().forEach(b => {
+            let opt = document.createElement('option');
+            opt.value = b;
+            opt.innerHTML = b;
+            sel.appendChild(opt);
+        });
     }
 
     function filterBranches(val) {
