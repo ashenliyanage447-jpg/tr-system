@@ -65,11 +65,9 @@
 </div>
 
 <div class="admin-controls">
-    <span id="adminBadge">ADMIN MODE</span>
-    
+    <span id="adminBadge" style="display: none;">ADMIN MODE</span>
     <button id="adminBtn" onclick="showLogin()" style="padding: 5px 10px; background: #333; color: white; border:none; cursor:pointer;">Admin Login</button>
-    
-    <button id="logoutBtn" onclick="logout()" style="padding: 5px 10px; background: var(--danger); color: white; display: none; border:none; cursor:pointer;">Logout</button>
+    <button id="logoutBtn" onclick="logout()" style="padding: 5px 10px; background: #dc3545; color: white; display: none; border:none; cursor:pointer;">Logout</button>
 </div>
 
     <h2 style="text-align: center; color: var(--primary);">TR Management System</h2>
@@ -183,6 +181,7 @@
     const branches = ["Head Office", "Ambalangoda", "Akuressa", "Ampara", "Anuradhapura", "Avissawella", "Ambalantota", "Balangoda", "Batticaloa", "Bandarawela", "Bentota", "Chilaw", "Chunnakkam", "Eheliyagoda", "Elakanda", "Elpitiya", "Embilipitiya", "Galle", "Gampaha", "Gampola", "Giriulla", "Godagama", "Hatton", "Hanwella", "Horana", "Horana Town", "Ja-ela", "Jaffna", "Kaduruwela", "Karapitiya", "Katugastota", "Kesbewa", "Kaduwela", "Kekirawa", "Kotahena", "Kalutara", "Kilinochchi", "Kurunegala", "Kuliyapitiya", "Kottawa", "Kandy", "Kegalle", "Kohuwala", "Kochchikade", "Matugama", "Malabe", "Maharagama", "Mahara", "Manipay", "Mattakkuliya", "Matale", "Mawathagama", "Moratuwa", "Maradana", "Matara", "Minuwangoda", "Negombo", "Nelliyadi", "Neluwa", "Nawalapitiya", "Nittambuwa", "Nikaweratiya", "Nuwaraeliya", "Norochchole", "Panadura", "Polonnaruwa", "Premier Center", "Pussellawa", "Puthukkudiyiriuppu", "Puttlam", "Pelawatte", "Ragala", "Rathnapura", "Thalawakele", "Thambuththegama", "Thissamaharama", "Trincomalee", "Veyangoda", "Vauniya", "Wellawatte", "Welimada", "Wennappuwa", "Warakapola", "Wattala", "Kalawanchikudy", "Kiribathgoda", "Kurunegala City", "Colombo City", "Weligama", "Negombo City", "Tangalle", "Dambulla"];
 
     let isAdmin = false;
+    let currentSessionPass = "";
     let editingId = null;
     let currentSessionPass = ""; // Stores password for the current session only
     window.onload = () => {
@@ -203,14 +202,18 @@
     }
 
     // --- ADMIN ---
-    function showLogin() { document.getElementById('loginOverlay').style.display = 'flex'; }
-    function closeLogin() { document.getElementById('loginOverlay').style.display = 'none'; }
+    function showLogin() { 
+    document.getElementById('loginOverlay').style.display = 'flex'; 
+}
+
+function closeLogin() { 
+    document.getElementById('loginOverlay').style.display = 'none'; 
+}
     
   async function attemptLogin() {
     const enteredPass = document.getElementById('adminPass').value;
     
-    // We send a "dummy" request to the server to verify the password
-    // Using FETCH_SINGLE with a fake ID is a quick way to verify
+    // We verify the password by sending a request to Google Script
     try {
         const resp = await fetch(GOOGLE_SCRIPT_URL, { 
             method: "POST", 
@@ -219,43 +222,40 @@
         const res = await resp.json();
 
         if (res.result !== "error") { 
-            // If the server didn't return "Unauthorized", the password is correct
+            // LOGIN SUCCESSFUL
             isAdmin = true;
-            currentSessionPass = enteredPass; // Store for future updates/deletes
+            currentSessionPass = enteredPass; 
+            
+            // UI CHANGES:
             document.getElementById('adminBadge').style.display = 'inline';
-            document.getElementById('logoutBtn').style.display = 'inline';
+            document.getElementById('logoutBtn').style.display = 'inline'; // Show Logout
+            document.getElementById('adminBtn').style.display = 'none';    // Hide Login
             document.getElementById('reprintArea').style.display = 'block';
-            document.getElementById('adminBtn').style.display = 'none';
             document.getElementById('adminHint').style.display = 'inline';
+            
             closeLogin();
             renderTable();
         } else {
             alert("Invalid Admin Password");
         }
     } catch (e) {
-        alert("Connection Error");
+        alert("Server Error: Could not verify password.");
     }
 }
     function logout() {
-    // 1. Wipe the security token from memory
+    // 1. Clear credentials
     currentSessionPass = "";
     isAdmin = false;
-    editingId = null;
 
-    // 2. Hide Admin-only elements immediately
+    // 2. Reset UI Visibility
     document.getElementById('adminBadge').style.display = 'none';
     document.getElementById('logoutBtn').style.display = 'none';
-    document.getElementById('reprintArea').style.display = 'none';
-    document.getElementById('adminHint').style.display = 'none';
-    
-    // 3. Show the Login button again
     document.getElementById('adminBtn').style.display = 'inline';
-
-    // 4. Clear any active form data
+    document.getElementById('reprintArea').style.display = 'none';
+    
+    // 3. Clear the form and refresh to be safe
     resetUI();
-
-    // 5. Hard Refresh to ensure no session data remains in the browser
-    window.location.reload();
+    window.location.reload(); 
 }
 
     function loadForEdit(id) {
