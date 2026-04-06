@@ -64,12 +64,13 @@
     </div>
 </div>
 
-<div class="container">
-    <div class="admin-controls">
-        <span id="adminBadge">ADMIN MODE</span>
-        <button id="adminBtn" onclick="showLogin()" style="padding: 5px 10px; background: #333; color: white; border:none; cursor:pointer;">Admin Login</button>
-        <button id="logoutBtn" onclick="logout()" style="padding: 5px 10px; background: var(--danger); color: white; display: none; border:none; cursor:pointer;">Logout</button>
-    </div>
+<div class="admin-controls">
+    <span id="adminBadge">ADMIN MODE</span>
+    
+    <button id="adminBtn" onclick="showLogin()" style="padding: 5px 10px; background: #333; color: white; border:none; cursor:pointer;">Admin Login</button>
+    
+    <button id="logoutBtn" onclick="logout()" style="padding: 5px 10px; background: var(--danger); color: white; display: none; border:none; cursor:pointer;">Logout</button>
+</div>
 
     <h2 style="text-align: center; color: var(--primary);">TR Management System</h2>
 
@@ -234,6 +235,27 @@
     } catch (e) {
         alert("Connection Error");
     }
+}
+    function logout() {
+    // 1. Wipe the security token from memory
+    currentSessionPass = "";
+    isAdmin = false;
+    editingId = null;
+
+    // 2. Hide Admin-only elements immediately
+    document.getElementById('adminBadge').style.display = 'none';
+    document.getElementById('logoutBtn').style.display = 'none';
+    document.getElementById('reprintArea').style.display = 'none';
+    document.getElementById('adminHint').style.display = 'none';
+    
+    // 3. Show the Login button again
+    document.getElementById('adminBtn').style.display = 'inline';
+
+    // 4. Clear any active form data
+    resetUI();
+
+    // 5. Hard Refresh to ensure no session data remains in the browser
+    window.location.reload();
 }
 
     function loadForEdit(id) {
