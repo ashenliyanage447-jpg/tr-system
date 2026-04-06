@@ -177,13 +177,13 @@
 </div>
 
 <script>
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwC-c9NGLNr9KEqB0af8O6qNrs4u8nxTOPjWqRgtAVZt1whmhMEjEYMaQZmbT1taag8/exec"; 
-    const ADMIN_PASSWORD = "admin123"; 
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzT9Z3FkXfY_wgGEms1PZKAfstOsfMprwOXqFN8fQqJ07zGsOJBekKbYOpCR7LiF3iV/exec"; 
+    
     const branches = ["Head Office", "Ambalangoda", "Akuressa", "Ampara", "Anuradhapura", "Avissawella", "Ambalantota", "Balangoda", "Batticaloa", "Bandarawela", "Bentota", "Chilaw", "Chunnakkam", "Eheliyagoda", "Elakanda", "Elpitiya", "Embilipitiya", "Galle", "Gampaha", "Gampola", "Giriulla", "Godagama", "Hatton", "Hanwella", "Horana", "Horana Town", "Ja-ela", "Jaffna", "Kaduruwela", "Karapitiya", "Katugastota", "Kesbewa", "Kaduwela", "Kekirawa", "Kotahena", "Kalutara", "Kilinochchi", "Kurunegala", "Kuliyapitiya", "Kottawa", "Kandy", "Kegalle", "Kohuwala", "Kochchikade", "Matugama", "Malabe", "Maharagama", "Mahara", "Manipay", "Mattakkuliya", "Matale", "Mawathagama", "Moratuwa", "Maradana", "Matara", "Minuwangoda", "Negombo", "Nelliyadi", "Neluwa", "Nawalapitiya", "Nittambuwa", "Nikaweratiya", "Nuwaraeliya", "Norochchole", "Panadura", "Polonnaruwa", "Premier Center", "Pussellawa", "Puthukkudiyiriuppu", "Puttlam", "Pelawatte", "Ragala", "Rathnapura", "Thalawakele", "Thambuththegama", "Thissamaharama", "Trincomalee", "Veyangoda", "Vauniya", "Wellawatte", "Welimada", "Wennappuwa", "Warakapola", "Wattala", "Kalawanchikudy", "Kiribathgoda", "Kurunegala City", "Colombo City", "Weligama", "Negombo City", "Tangalle", "Dambulla"];
 
     let isAdmin = false;
     let editingId = null;
-
+    let currentSessionPass = ""; // Stores password for the current session only
     window.onload = () => {
         populateDropdown(branches);
         document.getElementById('trDate').valueAsDate = new Date();
@@ -205,9 +205,22 @@
     function showLogin() { document.getElementById('loginOverlay').style.display = 'flex'; }
     function closeLogin() { document.getElementById('loginOverlay').style.display = 'none'; }
     
-    function attemptLogin() {
-        if(document.getElementById('adminPass').value === ADMIN_PASSWORD) {
+  async function attemptLogin() {
+    const enteredPass = document.getElementById('adminPass').value;
+    
+    // We send a "dummy" request to the server to verify the password
+    // Using FETCH_SINGLE with a fake ID is a quick way to verify
+    try {
+        const resp = await fetch(GOOGLE_SCRIPT_URL, { 
+            method: "POST", 
+            body: JSON.stringify({ action: "FETCH_SINGLE", id: "VERIFY", pass: enteredPass }) 
+        });
+        const res = await resp.json();
+
+        if (res.result !== "error") { 
+            // If the server didn't return "Unauthorized", the password is correct
             isAdmin = true;
+            currentSessionPass = enteredPass; // Store for future updates/deletes
             document.getElementById('adminBadge').style.display = 'inline';
             document.getElementById('logoutBtn').style.display = 'inline';
             document.getElementById('reprintArea').style.display = 'block';
@@ -215,44 +228,13 @@
             document.getElementById('adminHint').style.display = 'inline';
             closeLogin();
             renderTable();
-        } else { alert("Wrong Password"); }
+        } else {
+            alert("Invalid Admin Password");
+        }
+    } catch (e) {
+        alert("Connection Error");
     }
-
-    function logout() { location.reload(); }
-
-    // --- CORE ---
-    async function handleSaveAndPrint() {
-        const saveBtn = document.getElementById('saveBtn');
-        const name = document.getElementById('trFrom').value;
-        const amount = document.getElementById('trAmount').value;
-        if(!name || !amount) return alert("Fill Name and Amount");
-
-        saveBtn.disabled = true;
-        saveBtn.innerText = "Syncing...";
-
-        const data = {
-            branch: document.getElementById('branchSelect').value,
-            date: document.getElementById('trDate').value,
-            name, mobile: document.getElementById('trMobile').value,
-            amount, words: document.getElementById('trWords').value,
-            as: document.getElementById('trAs').value,
-            method: document.getElementById('payMethod').value,
-            action: "SAVE"
-        };
-
-        try {
-            const resp = await fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify(data)});
-            const res = await resp.json();
-            if(res.result === "success") {
-                data.id = res.generatedId;
-                saveLocal(data);
-                mapToPrint(data);
-                window.print();
-                resetUI();
-            }
-        } catch(e) { alert("Server Error"); }
-        finally { saveBtn.disabled = false; saveBtn.innerText = "Save & Print"; }
-    }
+}
 
     function loadForEdit(id) {
         if(!isAdmin) return;
@@ -277,31 +259,37 @@
         }
     }
 
-    async function handleUpdate() {
-        if(!confirm("Update this record?")) return;
-        const logs = JSON.parse(localStorage.getItem('tr_final_logs') || "[]");
-        const idx = logs.findIndex(l => l.id === editingId);
-        
-        const data = {
-            id: editingId,
-            branch: document.getElementById('branchSelect').value,
-            date: document.getElementById('trDate').value,
-            name: document.getElementById('trFrom').value,
-            mobile: document.getElementById('trMobile').value,
-            amount: document.getElementById('trAmount').value,
-            words: document.getElementById('trWords').value,
-            as: document.getElementById('trAs').value,
-            method: document.getElementById('payMethod').value,
-            action: "UPDATE"
-        };
+   async function handleUpdate() {
+    if(!confirm("Update this record?")) return;
+    const logs = JSON.parse(localStorage.getItem('tr_final_logs') || "[]");
+    const idx = logs.findIndex(l => l.id === editingId);
+    
+    const data = {
+        id: editingId,
+        pass: currentSessionPass, // Send password to authorize update
+        branch: document.getElementById('branchSelect').value,
+        date: document.getElementById('trDate').value,
+        name: document.getElementById('trFrom').value,
+        mobile: document.getElementById('trMobile').value,
+        amount: document.getElementById('trAmount').value,
+        words: document.getElementById('trWords').value,
+        as: document.getElementById('trAs').value,
+        method: document.getElementById('payMethod').value,
+        action: "UPDATE"
+    };
 
+    const resp = await fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify(data)});
+    const res = await resp.json();
+    
+    if(res.result === "success") {
         logs[idx] = data;
         localStorage.setItem('tr_final_logs', JSON.stringify(logs));
-        fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify(data)});
-        alert("Updated!");
+        alert("Updated Successfully!");
         resetUI();
+    } else {
+        alert("Update failed: Unauthorized");
     }
-
+}
     async function handleDelete() {
         if(!confirm("Delete this TR?")) return;
         let logs = JSON.parse(localStorage.getItem('tr_final_logs') || "[]");
@@ -385,33 +373,22 @@
     document.getElementById('pCheque').innerText = data.method === 'Cheque' ? formattedAmount : '-';
 }
 
-  async function executeReprint() {
+ async function executeReprint() {
     const searchId = document.getElementById('reprintSearchInput').value.trim().toUpperCase();
     if (!searchId) return alert("Enter TR Number");
 
-    let logs = JSON.parse(localStorage.getItem('tr_final_logs') || "[]");
-    let record = logs.find(l => l.id === searchId);
-
-    // If NOT found locally, ask the Google Sheet (Cloud Search)
-    if (!record) {
-        document.getElementById('reprintSearchInput').value = "Searching Cloud...";
-        try {
-            const response = await fetch(GOOGLE_SCRIPT_URL, {
-                method: "POST",
-                body: JSON.stringify({ action: "FETCH_SINGLE", id: searchId })
-            });
-            const result = await response.json();
-            if (result.result === "success") {
-                record = result.data;
-            }
-        } catch (e) { console.log("Cloud search failed"); }
-    }
-
-    if (record) {
-        mapToPrint(record);
+    // Pass the session password so the cloud search is authorized
+    const response = await fetch(GOOGLE_SCRIPT_URL, {
+        method: "POST",
+        body: JSON.stringify({ action: "FETCH_SINGLE", id: searchId, pass: currentSessionPass })
+    });
+    const result = await response.json();
+    
+    if (result.result === "success") {
+        mapToPrint(result.data);
         setTimeout(() => { window.print(); }, 500);
     } else {
-        alert("Receipt not found anywhere.");
+        alert("Receipt not found or Unauthorized.");
     }
 }
     function exportToExcel() {
